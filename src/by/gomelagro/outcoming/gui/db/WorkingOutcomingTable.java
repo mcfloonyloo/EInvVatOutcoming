@@ -16,7 +16,7 @@ import javax.swing.JOptionPane;
 
 import by.gomelagro.outcoming.format.date.InvoiceDateFormat;
 import by.gomelagro.outcoming.gui.db.files.data.UnloadedInvoice;
-import by.gomelagro.outcoming.gui.frames.report.ResultFont;
+import by.gomelagro.outcoming.gui.frames.report.component.ResultFont;
 import by.gomelagro.outcoming.status.Status;
 
 public class WorkingOutcomingTable {
@@ -349,12 +349,12 @@ public class WorkingOutcomingTable {
 		String sql = "UPDATE OUTCOMING SET STATUSINVOICEEN = ?, STATUSINVOICERU = ? WHERE NUMBERINVOICE = ?";
 		boolean result = false;
 		PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
-			statement.setString(1, Status.valueOf(status.trim()).getEnValue());
-			statement.setString(2, Status.valueOf(status.trim()).getRuValue());
-			statement.setString(3, number);
-			statement.executeUpdate();
-			result = true;
-			return result;
+		statement.setString(1, Status.valueOf(status.trim()).getEnValue());
+		statement.setString(2, Status.valueOf(status.trim()).getRuValue());
+		statement.setString(3, number);
+		statement.executeUpdate();
+		result = true;
+		return result;
 	}
 	
 	//обновление статусов при загрузке файла
@@ -369,4 +369,15 @@ public class WorkingOutcomingTable {
 		return result;
 	}
 	
+	//наличие имени файла в базе данных
+	public static boolean isNumberInvoice(String number) throws SQLException{
+		String sql = "SELECT COUNT(*) AS COUT FROM OUTCOMING WHERE NUMBERINVOICE = '"+number+"'";
+		Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+		ResultSet set = statement.executeQuery(sql);
+		int count = -1;
+		while(set.next()){
+			count = set.getInt("COUT");
+		}
+		if(count == 1){return true;}else{return false;}
+	}
 }

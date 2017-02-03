@@ -1,4 +1,4 @@
-package by.gomelagro.outcoming.gui.console;
+package by.gomelagro.outcoming.gui.console.component;
 
 
 import java.awt.Color;

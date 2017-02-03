@@ -11,8 +11,8 @@ import javax.swing.border.CompoundBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.border.StrokeBorder;
 
-import by.gomelagro.outcoming.gui.frames.report.ResultElementList;
-import by.gomelagro.outcoming.gui.frames.report.ResultFont;
+import by.gomelagro.outcoming.gui.frames.report.component.ResultElementList;
+import by.gomelagro.outcoming.gui.frames.report.component.ResultFont;
 
 public class ResultListCellRenderer extends JLabel implements ListCellRenderer<ResultElementList>{
 

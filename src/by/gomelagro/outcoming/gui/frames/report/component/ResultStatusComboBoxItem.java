@@ -1,4 +1,4 @@
-package by.gomelagro.outcoming.gui.frames.report;
+package by.gomelagro.outcoming.gui.frames.report.component;
 
 public class ResultStatusComboBoxItem {
 	private String text;

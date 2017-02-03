@@ -34,7 +34,7 @@ import javax.swing.SwingWorker;
 import javax.swing.border.BevelBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-import by.gomelagro.outcoming.gui.console.JConsole;
+import by.gomelagro.outcoming.gui.console.component.JConsole;
 import by.gomelagro.outcoming.gui.db.ConnectionDB;
 import by.gomelagro.outcoming.gui.db.WorkingOutcomingTable;
 import by.gomelagro.outcoming.gui.db.files.WorkingFiles;
@@ -68,7 +68,7 @@ public class MainFrame extends JFrame{
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки исходящих ЭСЧФ v0.3.5";
+	private final String title = "Приложение для обработки исходящих ЭСЧФ v0.3.5.1";
 	
 	static{
 		ApplicationProperties.getInstance();	

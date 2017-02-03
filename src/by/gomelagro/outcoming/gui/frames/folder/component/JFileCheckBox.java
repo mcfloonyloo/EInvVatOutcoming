@@ -1,5 +1,7 @@
 package by.gomelagro.outcoming.gui.frames.folder.component;
 
+import java.awt.Color;
+
 import javax.swing.JCheckBox;
 
 public class JFileCheckBox extends JCheckBox {
@@ -8,24 +10,21 @@ public class JFileCheckBox extends JCheckBox {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	private String value = null;
+	private String value;
+	private Color color;
 
-	private boolean red = false;
-
-	public JFileCheckBox(String itemValue, boolean selected, boolean enabled) {
-		super(itemValue == null ? "" : "" + itemValue, selected);
-		setEnabled(enabled);
-		setValue(itemValue);
-	}
-
-	public boolean isEnabled(){
-		return super.isEnabled();
+	public JFileCheckBox(String value, boolean selected) {
+		super(value == null ? "" : "" + value, selected);
+		this.value = value;
 	}
 	
-	public void setEnabled(boolean enabled){
-		super.setEnabled(enabled);
+	public JFileCheckBox(Builder build){
+		super(build.value == null ? "" : "" + build.value, build.selected);
+		this.value = build.value;
+		this.color = build.color;
+		setSelected(build.selected);
 	}
-	
+
 	public boolean isSelected() {
 		return super.isSelected();
 	}
@@ -34,20 +33,41 @@ public class JFileCheckBox extends JCheckBox {
 		super.setSelected(selected);
 	}
 
+	
 	public String getValue() {
 		return value;
 	}
-
-	public void setValue(String value) {
-		this.value = value;
+	
+	public Color getColor(){
+		return color;
 	}
+	
+	public static class Builder{
+		private String value;
+		private Color color;	
+		private boolean selected;
+		
+		public Builder(){}
+		
+		public Builder setValue(String value){
+			this.value = value;
+			return this;
+		}
+		
+		public Builder setColor(Color color){
+			this.color = color;
+			return this;
+		}
+		
+		public Builder setSelected(boolean selected){
+			this.selected = selected;
+			return this;
+		}
 
-	public boolean isRed() {
-		return red;
-	}
-
-	public void setRed(boolean red) {
-		this.red = red;
+		public JFileCheckBox build(){
+			return new JFileCheckBox(this);
+		}
+		
 	}
 
 }

@@ -1,15 +1,15 @@
-package by.gomelagro.outcoming.gui.frames.report.component;
+package by.gomelagro.outcoming.gui.frames.folder.component;
 
 import java.awt.Color;
 import java.awt.Font;
 
-public class ResultFont {
+public class FileCheckBoxFont {
 	public static Font getFont(){
-		return new Font("Courier New", Font.PLAIN, 11);
+		return new Font("Tahoma", Font.PLAIN, 11);
 	}
 	
 	public static Font getBoldFont(){
-		return new Font("Courier New", Font.BOLD, 11);
+		return new Font("Tahoma", Font.BOLD, 11);
 	}
 	
 	public static Color getRed(){

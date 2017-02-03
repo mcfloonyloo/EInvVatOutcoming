@@ -1,5 +1,6 @@
 package by.gomelagro.outcoming.gui.frames;
 
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dialog.ModalExclusionType;
 import java.awt.GridBagConstraints;
@@ -9,6 +10,7 @@ import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.sql.SQLException;
 
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
@@ -22,8 +24,12 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.border.EmptyBorder;
 
+import by.gomelagro.outcoming.gui.db.WorkingOutcomingTable;
+import by.gomelagro.outcoming.gui.frames.folder.component.FileCheckBoxFont;
 import by.gomelagro.outcoming.gui.frames.folder.component.JFileCheckBoxList;
+import by.gomelagro.outcoming.gui.frames.folder.extractor.NumberInvoiceExtractor;
 import by.gomelagro.outcoming.gui.frames.folder.models.FileCheckBoxListModel;
+import by.gomelagro.outcoming.gui.frames.folder.validator.FileNameInvoiceValidator;
 import by.gomelagro.outcoming.properties.ApplicationProperties;
 import javax.swing.ScrollPaneConstants;
 
@@ -109,7 +115,7 @@ public class LoadOfFolderFrame extends JFrame {
 		JButton loadButton = new JButton("Загрузить");
 		loadButton.addMouseListener(new MouseAdapter() {
 			@Override
-			public void mousePressed(MouseEvent me) {
+			public void mousePressed(MouseEvent me) {	
 				if(me.getButton() == MouseEvent.BUTTON3){
 					showPopup(me);
 				}else 
@@ -154,10 +160,24 @@ public class LoadOfFolderFrame extends JFrame {
 	//заполняем список файлов
 	private void fillList(String path){
 		model.clear();
+		Color color = Color.BLACK;
 		File[] fList = new File(path).listFiles();
 		for(int index=0;index<fList.length;index++){
 			if(fList[index].isFile()){
-				model.addElement(fList[index].getName(), false, fList[index].isFile());
+				if(FileNameInvoiceValidator.validate(fList[index].getName())){
+					try {
+						if(WorkingOutcomingTable.isNumberInvoice(NumberInvoiceExtractor.getNumberInvoice(fList[index].getName()))){
+							color = FileCheckBoxFont.getGreen();
+						}else{
+							color = FileCheckBoxFont.getRed();
+						}
+					} catch (SQLException e) {
+						System.err.println(fList[index].getName()+": "+e.getLocalizedMessage());
+					}
+				}else{
+					color = FileCheckBoxFont.getBlack();
+				}
+				model.addElement(fList[index].getName(), false, color);
 			}
 		}		
 	}

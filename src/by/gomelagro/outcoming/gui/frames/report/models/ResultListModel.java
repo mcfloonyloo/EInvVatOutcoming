@@ -5,7 +5,7 @@ import java.awt.Font;
 
 import javax.swing.DefaultListModel;
 
-import by.gomelagro.outcoming.gui.frames.report.ResultElementList;
+import by.gomelagro.outcoming.gui.frames.report.component.ResultElementList;
 
 public class ResultListModel extends DefaultListModel<ResultElementList> {
 

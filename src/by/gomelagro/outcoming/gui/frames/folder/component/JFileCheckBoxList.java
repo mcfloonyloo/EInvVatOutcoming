@@ -5,10 +5,10 @@ import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.swing.DefaultListModel;
 import javax.swing.JList;
 import javax.swing.ListSelectionModel;
 
+import by.gomelagro.outcoming.gui.frames.folder.models.FileCheckBoxListModel;
 import by.gomelagro.outcoming.gui.frames.folder.models.renderer.FileListCellRenderer;
 
 public class JFileCheckBoxList extends JList<JFileCheckBox> {
@@ -20,14 +20,14 @@ public class JFileCheckBoxList extends JList<JFileCheckBox> {
 		
 	public JFileCheckBoxList() {
 		super();
-		setModel(new DefaultListModel<JFileCheckBox>());
+		setModel(new FileCheckBoxListModel());
 		setCellRenderer(new FileListCellRenderer());
 		addMouseListener(new MouseAdapter() {
 		
 			@Override
-			public void mousePressed(MouseEvent e) {
-				int index = locationToIndex(e.getPoint());
-				if ((index != -1)&&(e.getButton() == MouseEvent.BUTTON1)) {
+			public void mousePressed(MouseEvent me) {
+				int index = locationToIndex(me.getPoint());
+				if ((index != -1)&&(me.getButton() == MouseEvent.BUTTON1)) {
 					if(getModel().getElementAt(index).isEnabled()){
 						getModel().getElementAt(index).setSelected(!getModel().getElementAt(index).isSelected());
 						repaint();
