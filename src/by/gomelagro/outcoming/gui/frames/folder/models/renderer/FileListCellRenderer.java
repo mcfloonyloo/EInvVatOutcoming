@@ -28,24 +28,29 @@ public class FileListCellRenderer extends DefaultListCellRenderer  implements Li
 	public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
 		
 		if (value instanceof JFileCheckBox) {
-			JFileCheckBox checkbox = (JFileCheckBox) value;
-			checkbox.setBackground(Color.WHITE);
+			JFileCheckBox checkbox = (JFileCheckBox) value;			
+			checkbox.setForeground(checkbox.getForeColor());
 		 	if(isSelected){
-		 		checkbox.setForeground(checkbox.getColor());
 		 		checkbox.setFont(FileCheckBoxFont.getBoldFont());
 		 		checkbox.setBorder(new CompoundBorder(new LineBorder(new Color(255,255,255), 1),new StrokeBorder(new BasicStroke())));
 		 	}else{
-		 		checkbox.setForeground(checkbox.getColor());
 		 		checkbox.setFont(FileCheckBoxFont.getFont());
 		 		checkbox.setBorder(new LineBorder(new Color(255,255,255), 2));
 		 	}
 		 	
+		 	if(checkbox.isSelected()){
+		 		checkbox.setBackground(checkbox.getBackColor());
+		 	}else{
+		 		checkbox.setBackground(new Color(255,255,255));
+		 	}
 		    checkbox.setFocusPainted(false);
 		    checkbox.setBorderPainted(true);
 		    return checkbox;
+		
 		} else {
 		  	return super.getListCellRendererComponent(list, value.getClass().getName(), index, isSelected, cellHasFocus);
 		}
+		
 	}
 
 }

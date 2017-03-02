@@ -14,6 +14,7 @@ public class ApplicationPropertiesTemp {
 	private String filePath;			//путь к файлу выгрузки списка
 	private String dbPath;				//путь к базе данных
 	private String folderInvoicePath;	//путь к папке Ё—„‘
+	private String folderXsdPath;		//путь к папке XSD
 	
 	private String urlService;			//сетевой путь к сервису Ё—„‘
 	
@@ -25,6 +26,7 @@ public class ApplicationPropertiesTemp {
 	public String getFilePath(){return this.filePath;}
 	public String getDbPath(){return this.dbPath;}
 	public String getFolderInvoicePath(){return this.folderInvoicePath;}
+	public String getFolderXsdPath(){return this.folderXsdPath;}
 	
 	public String getUrlService(){return this.urlService;}
 	
@@ -36,6 +38,7 @@ public class ApplicationPropertiesTemp {
 		this.filePath = build.filePath;
 		this.dbPath = build.dbPath;
 		this.folderInvoicePath = build.folderInvoicePath;
+		this.folderXsdPath = build.folderXsdPath;
 		
 		this.urlService = build.urlService;
 		
@@ -50,6 +53,7 @@ public class ApplicationPropertiesTemp {
 		private String filePath;
 		private String dbPath;
 		private String folderInvoicePath;
+		private String folderXsdPath;
 		
 		private String urlService;
 		
@@ -83,6 +87,11 @@ public class ApplicationPropertiesTemp {
 		
 		public Builder setFolderInvoicePath(String folderInvoicePath){
 			this.folderInvoicePath = folderInvoicePath;
+			return this;
+		}
+		
+		public Builder setfolderXsdPath(String folderXsdPath){
+			this.folderXsdPath = folderXsdPath;
 			return this;
 		}
 		

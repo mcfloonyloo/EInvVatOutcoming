@@ -65,6 +65,7 @@ public class ReportOneDayFrame extends JFrame {
 	private JMenu fileMenu;
 	private JMenuItem saveMenuItem;
 	private JMenuItem saveAsMenuItem;
+	private JMenuItem saveAsLayoutMenuItem;
 	private JLabel onDateLabel;
 	private JLabel generatedReportLabel;
 	private JLabel statusLabel;
@@ -86,7 +87,7 @@ public class ReportOneDayFrame extends JFrame {
 		setTitle("Отчет по ЭСЧФ за один день");
 		setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 		setResizable(false);
-		setBounds(100, 100, 800, 520);
+		setBounds(100, 100, 920, 520);
 		
 		menuBar = new JMenuBar();
 		setJMenuBar(menuBar);
@@ -121,6 +122,24 @@ public class ReportOneDayFrame extends JFrame {
 		saveAsMenuItem.setEnabled(false);
 		fileMenu.add(saveAsMenuItem);
 		
+		fileMenu.addSeparator();
+		
+		saveAsLayoutMenuItem = new JMenuItem("Сохранить с оформлением как...");
+		saveAsLayoutMenuItem.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				JFileChooser chooser = new JFileChooser("Сохранить как...");
+				chooser.setMultiSelectionEnabled(false);
+				chooser.addChoosableFileFilter(new FileNameExtensionFilter("Text files (.txt)", "txt"));
+				chooser.setAcceptAllFileFilterUsed(false);
+				chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+				if(chooser.showSaveDialog(null) == JFileChooser.APPROVE_OPTION){
+					saveFileLayout(chooser.getSelectedFile().getAbsolutePath().trim()+".txt");
+				}
+			}
+		});
+		saveAsLayoutMenuItem.setEnabled(false);
+		fileMenu.add(saveAsLayoutMenuItem);
 		
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
@@ -192,7 +211,12 @@ public class ReportOneDayFrame extends JFrame {
 		statusComboBox = new JComboBox<ResultStatusComboBoxItem>();
 		statusComboBox.addItem(new ResultStatusComboBoxItem("Все",""));
 		statusComboBox.addItem(new ResultStatusComboBoxItem("Подписан"," AND STATUSINVOICEEN = 'COMPLETED_SIGNED'"));
-		statusComboBox.addItem(new ResultStatusComboBoxItem("Не подписан"," AND (STATUSINVOICEEN = 'COMPLETED' OR STATUSINVOICEEN = 'ON_AGREEMENT' OR STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND')"));
+		statusComboBox.addItem(new ResultStatusComboBoxItem("Не подписан"," AND (STATUSINVOICEEN = 'COMPLETED'"
+																		+ " OR STATUSINVOICEEN = 'ON_AGREEMENT'"
+																		+ " OR STATUSINVOICEEN = 'IN_PROGRESS'"
+																		+ " OR STATUSINVOICEEN = 'NOT_FOUND')"));
+		statusComboBox.addItem(new ResultStatusComboBoxItem("Аннулирован"," AND (STATUSINVOICEEN = 'CANCELLED'"
+																		+ " OR STATUSINVOICEEN = 'ON_AGREEMENT_CANCELLED')"));
 		statusComboBox.setSelectedIndex(0);
 		GridBagConstraints gbc_statusComboBox = new GridBagConstraints();
 		gbc_statusComboBox.gridwidth = 2;
@@ -213,7 +237,6 @@ public class ReportOneDayFrame extends JFrame {
 		
 		sortedComboBox = new JComboBox<ResultSortComboBoxItem>();
 		sortedComboBox.addItem(new ResultSortComboBoxItem("УНП",UnloadedInvoiceComparators.compareToUnp));
-		sortedComboBox.addItem(new ResultSortComboBoxItem("Дата совершения",UnloadedInvoiceComparators.compareToDate));
 		sortedComboBox.addItem(new ResultSortComboBoxItem("Статус",UnloadedInvoiceComparators.compareToStatus));
 		GridBagConstraints gbc_sortedComboBox = new GridBagConstraints();
 		gbc_sortedComboBox.gridwidth = 2;
@@ -228,7 +251,14 @@ public class ReportOneDayFrame extends JFrame {
 		titleList.setFont(new Font("Courier New", Font.BOLD, 11));
 		titleList.setModel(new AbstractListModel<String>() {
 			private static final long serialVersionUID = 1L;
-			String[] values = new String[] {"   УНП   ;    ДАТА   ;         НОМЕР ЭСЧФ       ;   СТАТУС   ;   БЕЗ НДС  ;     НДС    ;    ВСЕГО"};
+			String[] values = new String[] {"   УНП    ;"
+										  + "    ДАТА   ;"
+										  + "         НОМЕР ЭСЧФ       ;"
+										  + "   СТАТУС   ;"
+										  + "   БЕЗ НДС  ;"
+										  + "     НДС    ;"
+										  + "    ВСЕГО   ;"
+										  + " ДАТА ДОКУМЕНТА"};
 			public int getSize() {
 				return values.length;
 			}
@@ -263,7 +293,7 @@ public class ReportOneDayFrame extends JFrame {
 	private void generated(){
 		List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
 		try {
-			list = WorkingOutcomingTable.selectSignedNumbersInvoiceAtDate(
+			list = WorkingOutcomingTable.Report.selectSignedNumbersInvoiceAtDate(
 					Date.valueOf(InvoiceDateFormat.dateReverseSmallDash2String(dateChooser.getDate())),
 					((ResultSortComboBoxItem) sortedComboBox.getSelectedItem()).getComparator(), 
 					((ResultStatusComboBoxItem) statusComboBox.getSelectedItem()).getSql());
@@ -287,7 +317,29 @@ public class ReportOneDayFrame extends JFrame {
 				writer.write(listModel.getElementAt(index).getTrimmed()+System.lineSeparator());
 			}
 			writer.flush();
-			JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+ApplicationProperties.getInstance().getFilePath(),"Информация",JOptionPane.INFORMATION_MESSAGE);
+			JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+filePath.trim(),"Информация",JOptionPane.INFORMATION_MESSAGE);
+		} catch (IOException e) {
+		JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+		} finally {
+			if(writer != null){
+				try{
+					writer.close();
+				}catch(IOException e){
+					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+				}
+			}
+		}
+	}
+	
+	private void saveFileLayout(String filePath){
+		FileWriter writer = null;
+		try {
+			writer = new FileWriter(filePath);
+			for(int index=0;index<listModel.size();index++){
+				writer.write(listModel.getElementAt(index).getFormatted()+System.lineSeparator());
+			}
+			writer.flush();
+			JOptionPane.showMessageDialog(null, "Отчет сохранен в файл "+filePath.trim(),"Информация",JOptionPane.INFORMATION_MESSAGE);
 		} catch (IOException e) {
 		JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 		} finally {

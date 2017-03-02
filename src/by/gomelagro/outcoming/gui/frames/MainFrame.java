@@ -13,7 +13,6 @@ import java.sql.SQLException;
 import java.text.ParseException;
 import java.util.List;
 
-import javax.swing.AbstractListModel;
 import javax.swing.ComboBoxModel;
 import javax.swing.DefaultComboBoxModel;
 import javax.swing.JComboBox;
@@ -27,18 +26,23 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
-import javax.swing.JSeparator;
 import javax.swing.JTextPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingWorker;
 import javax.swing.border.BevelBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import by.gomelagro.outcoming.format.date.InvoiceDateFormat;
 import by.gomelagro.outcoming.gui.console.component.JConsole;
 import by.gomelagro.outcoming.gui.db.ConnectionDB;
 import by.gomelagro.outcoming.gui.db.WorkingOutcomingTable;
 import by.gomelagro.outcoming.gui.db.files.WorkingFiles;
 import by.gomelagro.outcoming.gui.frames.enstatus.UpdateEnStatus;
+import by.gomelagro.outcoming.gui.frames.list.JMonthPanel;
+import by.gomelagro.outcoming.gui.frames.list.MonthPanelListModel;
+import by.gomelagro.outcoming.gui.frames.list.MonthYearItem;
+import by.gomelagro.outcoming.gui.frames.list.renderer.MonthPanelCellListRenderer;
 import by.gomelagro.outcoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.outcoming.properties.ApplicationProperties;
 import by.gomelagro.outcoming.service.EVatServiceSingleton;
@@ -62,13 +66,15 @@ public class MainFrame extends JFrame{
 	
 	private JLabel allInvoicesLabel;
 	private JLabel completedLabel;
-	private JLabel noCompletedLabel;
+	private JLabel uncompletedLabel;
 	private JLabel cancelledLabel;
 	private JLabel undeterminedLabel;
 	
 	private JComboBox<String> yearComboBox;
 	
-	private final String title = "Приложение для обработки исходящих ЭСЧФ v0.3.5.1";
+	private MonthPanelListModel model;
+	
+	private final String title = "Приложение для обработки исходящих ЭСЧФ v0.3.6.0";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -81,9 +87,11 @@ public class MainFrame extends JFrame{
 	 * Create the application.
 	 */
 	public MainFrame() {
+		//initialize();
+		
 		if(WorkingFiles.isFile(ApplicationProperties.getInstance().getDbPath())){
 			initialize();
-			if(WorkingOutcomingTable.getCountAll() > 0)
+			if(WorkingOutcomingTable.Count.getCountAll() > 0)
 				updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
 			setVisible(true);
 		}else{
@@ -101,6 +109,7 @@ public class MainFrame extends JFrame{
 						"Пожалуйста, повторно запустите программу","Информация",JOptionPane.INFORMATION_MESSAGE);
 			}
 		}
+		
 	}
 	
 	/**
@@ -114,7 +123,7 @@ public class MainFrame extends JFrame{
 		}
 		setTitle(title);
 		setResizable(false);
-		setBounds(100, 100, 1065, 630);
+		setBounds(100, 100, 920, 650);
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		GridBagLayout gridBagLayout = new GridBagLayout();
 		gridBagLayout.columnWidths = new int[]{0, 0};
@@ -156,7 +165,7 @@ public class MainFrame extends JFrame{
 				}
 			}
 		});
-		if(WorkingOutcomingTable.getCountAll() > 0){
+		if(WorkingOutcomingTable.Count.getCountAll() > 0){
 			if(fillYear()){
 				yearComboBox.setSelectedIndex(0);
 			}else{
@@ -172,37 +181,24 @@ public class MainFrame extends JFrame{
 		gbc_yearComboBox.gridy = 1;
 		mainPanel.add(yearComboBox, gbc_yearComboBox);
 		
-		JList<String> titleList = new JList<String>();
-		titleList.setEnabled(false);
-		titleList.setFont(new Font("Courier New", Font.PLAIN, 11));
-		titleList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
-		titleList.setModel(new AbstractListModel<String>() {
-			private static final long serialVersionUID = 1L;
-			String[] values = new String[] {"[ЗАГОЛОВОК СПИСКА СТРОКИ, СОДЕРЖАЩЕЙ СВЕДЕНИЯ ОБ ЭСЧФ И НДС ПО МЕСЯЦАМ ВЫБРАННОГО ГОДА]"};
-			public int getSize() {
-				return values.length;
-			}
-			public String getElementAt(int index) {
-				return values[index];
-			}
-		});
-		GridBagConstraints gbc_titleList = new GridBagConstraints();
-		gbc_titleList.anchor = GridBagConstraints.SOUTH;
-		gbc_titleList.insets = new Insets(0, 0, 5, 0);
-		gbc_titleList.fill = GridBagConstraints.HORIZONTAL;
-		gbc_titleList.gridx = 5;
-		gbc_titleList.gridy = 1;
-		mainPanel.add(titleList, gbc_titleList);
+		model = new MonthPanelListModel();
 		
-		JList<String> vatList = new JList<String>();
+		JList<JMonthPanel> vatList = new JList<JMonthPanel>();
+		vatList.setValueIsAdjusting(true);
+		vatList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		vatList.setCellRenderer(new MonthPanelCellListRenderer());
+		JScrollPane scroll_vatList = new JScrollPane(vatList);
+		scroll_vatList.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+		scroll_vatList	.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		vatList.setModel(model);
 		vatList.setFont(new Font("Courier New", Font.PLAIN, 11));
 		vatList.setBorder(new BevelBorder(BevelBorder.LOWERED, null, null, null, null));
 		GridBagConstraints gbc_vatList = new GridBagConstraints();
-		gbc_vatList.gridheight = 12;
+		gbc_vatList.gridheight = 13;
 		gbc_vatList.fill = GridBagConstraints.BOTH;
 		gbc_vatList.gridx = 5;
-		gbc_vatList.gridy = 2;
-		mainPanel.add(vatList, gbc_vatList);
+		gbc_vatList.gridy = 1;
+		mainPanel.add(scroll_vatList, gbc_vatList);
 		
 		JLabel lblAllInvoicesLabel = new JLabel("Всего ЭСЧФ: ");
 		lblAllInvoicesLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
@@ -260,14 +256,14 @@ public class MainFrame extends JFrame{
 		gbc_lblNoCompletedLabel.gridy = 5;
 		mainPanel.add(lblNoCompletedLabel, gbc_lblNoCompletedLabel);
 		
-		noCompletedLabel = new JLabel("");
-		noCompletedLabel.setFont(new Font("Courier New", Font.BOLD, 11));
+		uncompletedLabel = new JLabel("");
+		uncompletedLabel.setFont(new Font("Courier New", Font.BOLD, 11));
 		GridBagConstraints gbc_noCompletedLabel = new GridBagConstraints();
 		gbc_noCompletedLabel.anchor = GridBagConstraints.EAST;
 		gbc_noCompletedLabel.insets = new Insets(0, 0, 5, 5);
 		gbc_noCompletedLabel.gridx = 3;
 		gbc_noCompletedLabel.gridy = 5;
-		mainPanel.add(noCompletedLabel, gbc_noCompletedLabel);
+		mainPanel.add(uncompletedLabel, gbc_noCompletedLabel);
 		
 		JLabel lblCancelledLabel = new JLabel("аннулированы: ");
 		lblCancelledLabel.setFont(new Font("Courier New", Font.PLAIN, 11));
@@ -344,8 +340,7 @@ public class MainFrame extends JFrame{
 		infoCertMenuItem.setEnabled(false);
 		fileMenu.add(infoCertMenuItem);
 		
-		JSeparator separator = new JSeparator();
-		fileMenu.add(separator);
+		fileMenu.addSeparator();
 		
 		connectMenuItem = new JMenuItem("Подключить");
 		connectMenuItem.addMouseListener(new MouseAdapter() {
@@ -370,8 +365,7 @@ public class MainFrame extends JFrame{
 		disconnectMenuItem.setEnabled(false);
 		fileMenu.add(disconnectMenuItem);
 		
-		JSeparator separatorUp = new JSeparator();
-		fileMenu.add(separatorUp);
+		fileMenu.addSeparator();
 		
 		JMenuItem Settings = new JMenuItem("Настройки");
 		Settings.addMouseListener(new MouseAdapter() {
@@ -382,8 +376,7 @@ public class MainFrame extends JFrame{
 		});
 		fileMenu.add(Settings);
 		
-		JSeparator separatorDown = new JSeparator();
-		fileMenu.add(separatorDown);
+		fileMenu.addSeparator();
 		
 		JMenuItem exitMenuItem = new JMenuItem("Выход");
 		exitMenuItem.addMouseListener(new MouseAdapter() {
@@ -420,11 +413,10 @@ public class MainFrame extends JFrame{
 				}
 			}
 		});
-		//loadFolderMenuItem.setEnabled(false);
+		loadFolderMenuItem.setEnabled(false);
 		listMenu.add(loadFolderMenuItem);
 		
-		JSeparator upListSeparator = new JSeparator();
-		listMenu.add(upListSeparator);
+		listMenu.addSeparator();
 		
 		updateStatusMenuItem = new JMenuItem("Полное обновление статусов");
 		updateStatusMenuItem.addMouseListener(new MouseAdapter(){
@@ -452,8 +444,7 @@ public class MainFrame extends JFrame{
 		fastUpdateStatusMenuItem.setEnabled(false);
 		listMenu.add(fastUpdateStatusMenuItem);
 		
-		JSeparator downListSeparator = new JSeparator();
-		listMenu.add(downListSeparator);
+		listMenu.addSeparator();
 		
 		JMenu saveMenu = new JMenu("Отчет по ЭСЧФ...");
 		listMenu.add(saveMenu);
@@ -490,22 +481,44 @@ public class MainFrame extends JFrame{
 	 */	
 	private void updateMainPanel(String year){
 		if(yearComboBox.getModel().getSize() > 0){
-			allInvoicesLabel.setText(String.valueOf(WorkingOutcomingTable.getCountAllInYear(year)));
-			completedLabel.setText(String.valueOf(WorkingOutcomingTable.getCountCompleted(year)));
-			noCompletedLabel.setText(String.valueOf(WorkingOutcomingTable.getCountNoCompleted(year)));
-			cancelledLabel.setText(String.valueOf(WorkingOutcomingTable.getCountCancelled(year)));
-			undeterminedLabel.setText(String.valueOf(WorkingOutcomingTable.getCountUndetermined(year)));				
+			allInvoicesLabel.setText(String.valueOf(WorkingOutcomingTable.Count.getCountAllInYear(year)));
+			completedLabel.setText(String.valueOf(WorkingOutcomingTable.Count.getCountCompletedInYear(year)));
+			uncompletedLabel.setText(String.valueOf(WorkingOutcomingTable.Count.getCountUncompletedInYear(year)));
+			cancelledLabel.setText(String.valueOf(WorkingOutcomingTable.Count.getCountCancelledInYear(year)));
+			undeterminedLabel.setText(String.valueOf(WorkingOutcomingTable.Count.getCountUndeterminedInYear(year)));
+			
+			List<MonthYearItem> list = WorkingOutcomingTable.Date.selectMonthYear(year);
+			if(list != null){
+				model.clear();
+				for(int index=0;index<list.size();index++){
+					try {
+						model.addElement(
+								InvoiceDateFormat.string2DateReverseSmallDash(WorkingOutcomingTable.Date.getStartMonthOfDate(list.get(index).getMonth(), list.get(index).getYear())), 
+								InvoiceDateFormat.string2DateReverseSmallDash(WorkingOutcomingTable.Date.getEndMonthOfDate(list.get(index).getMonth(), list.get(index).getYear())),
+								WorkingOutcomingTable.Count.getCountCompletedInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
+								WorkingOutcomingTable.Count.getCountUncompletedInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
+								WorkingOutcomingTable.Count.getCountCancelledInMonthYear(list.get(index).getMonth(), list.get(index).getYear()), 
+								WorkingOutcomingTable.Count.getCountUndeterminedInMonthYear(list.get(index).getMonth(), list.get(index).getYear())
+						);
+
+					} catch (ParseException e) {
+						System.err.println("Record "+list.get(index).getMonth()+"-"+list.get(index).getYear()+": "+e.getLocalizedMessage());
+					}
+				}
+			}else{
+				JOptionPane.showMessageDialog(null, "Невозможно обработать пустой список","Внимание",JOptionPane.WARNING_MESSAGE);
+			}
 		}else{
 			allInvoicesLabel.setText("0");
 			completedLabel.setText("0");
-			noCompletedLabel.setText("0");
+			uncompletedLabel.setText("0");
 			cancelledLabel.setText("0");
 			undeterminedLabel.setText("0");
 		}
 	}
 	
 	private boolean fillYear(){
-		List<String> list = WorkingOutcomingTable.selectYearInvoice();
+		List<String> list = WorkingOutcomingTable.Date.selectYearInvoice();
 		ComboBoxModel<String> model = new DefaultComboBoxModel<String>();
 		if(list == null){
 			return false;
@@ -518,7 +531,7 @@ public class MainFrame extends JFrame{
 	}
 	
 	private void selectYear(){
-		if(WorkingOutcomingTable.getCountAll() > 0){
+		if(WorkingOutcomingTable.Count.getCountAll() > 0){
 			yearComboBox.setSelectedIndex(0);
 			updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
 		}
@@ -536,6 +549,7 @@ public class MainFrame extends JFrame{
 			disconnectMenuItem.setEnabled(false);
 			infoCertMenuItem.setEnabled(true);
 			loadFileMenuItem.setEnabled(true);
+			loadFolderMenuItem.setEnabled(true);
 			setTitle(title+" ["+ Certificate.getInstance().getOrgName().trim() +" " +Certificate.getInstance().getLastName().trim()+" "+Certificate.getInstance().getFirstMiddleName()+"]");
 		}
 	}
@@ -607,20 +621,21 @@ public class MainFrame extends JFrame{
 						}else{
 							unp = Certificate.getInstance().getUnp2();
 						}
+						int limit = 30;
 						try{
 							for(int index=0; index<lines.size();index++){
-								String[] fields = lines.get(index).split(";");								
-								if(fields[5].trim().equals(unp)){//изменить на чтение сертификата
-								//if(fields[5].trim().equals("400047886")){
-									System.out.println("Запись "+index+": Попытка чтения записи входящей ЭСЧФ из файла");
+								String[] fields = lines.get(index).split(";",limit);								
+								if(fields[6].trim().equals(unp)){//изменить на чтение сертификата
+								//if(fields[6].trim().equals("400047886")){
+									System.out.println("Запись "+index+1+": Попытка чтения записи входящей ЭСЧФ из файла");
 								}else{
-									switch(WorkingOutcomingTable.getCountRecord(fields[8])){
-									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[10]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
-									case  0: if(WorkingOutcomingTable.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-									case  1: if(WorkingOutcomingTable.updateStatusFromFile(fields[12], fields[10])){updateCount++;}else{errorCount++;} break;
+									switch(WorkingOutcomingTable.Count.getCountRecord(fields[8])){
+									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[12]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+									case  0: if(WorkingOutcomingTable.Insert.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
+									case  1: if(WorkingOutcomingTable.Update.updateStatusFromFile(fields[14], fields[12])){updateCount++;}else{errorCount++;} break;
 									default: avialCount++; break;
 									}
-									progress.setProgress(index);		
+									progress.setProgress(index+1);		
 									if(progress.isCancelled()){
 										JOptionPane.showMessageDialog(null, "Загрузка файла отменена","Внимание",JOptionPane.WARNING_MESSAGE);
 										break;

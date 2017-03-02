@@ -1,24 +1,31 @@
 package by.gomelagro.outcoming.gui.db.files.data;
 
 import java.awt.Color;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
+import by.gomelagro.outcoming.format.date.InvoiceDateFormat;
 
 public class UnloadedInvoice {
 	private String unp;
-	private String dateCommission;
+	private Date dateCommission;
 	private String numberInvoice;
 	private String statusinvoiceRu;
 	private String totalCost;
 	private String totalVat;
 	private String totalAll;
+	private String dateDocument;
 	private Color color;
 	
 	public String getUnp(){return this.unp;}
-	public String getDateCommission(){return this.dateCommission;}
+	public Date getDateCommission(){return this.dateCommission;}
 	public String getNumberInvoice(){return this.numberInvoice;}
 	public String getStatusInvoice(){return this.statusinvoiceRu;}
 	public String getTotalCost(){return this.totalCost;}
 	public String getTotalVat(){return this.totalVat;}
 	public String getTotalAll(){return this.totalAll;}
+	public String getDateDocument(){return this.dateDocument;}
 	public Color getColor(){return this.color;}
 	
 	private UnloadedInvoice(Builder builder){
@@ -28,18 +35,20 @@ public class UnloadedInvoice {
 		this.statusinvoiceRu = builder.statusinvoiceRu;
 		this.totalCost = builder.totalCost;
 		this.totalVat = builder.totalVat;
-		this.totalAll = builder.totalAll;	
+		this.totalAll = builder.totalAll;
+		this.dateDocument = builder.dateDocument;
 		this.color = builder.color;
 	}
 	
 	public static class Builder{
 		private String unp = "";
-		private String dateCommission = "";
+		private Date dateCommission = null;
 		private String numberInvoice = "";
 		private String statusinvoiceRu = "";
 		private String totalCost = "";
 		private String totalVat = "";
 		private String totalAll = "";
+		private String dateDocument = "";
 		private Color color = Color.BLACK;
 		
 		public Builder(){}
@@ -49,7 +58,7 @@ public class UnloadedInvoice {
 			return this;
 		}
 		
-		public Builder setDateCommission(String dateCommission){
+		public Builder setDateCommission(Date dateCommission){
 			this.dateCommission = dateCommission;
 			return this;
 		}
@@ -79,6 +88,11 @@ public class UnloadedInvoice {
 			return this;
 		}
 		
+		public Builder setDateDocument(String dateDocument){
+			this.dateDocument = dateDocument;
+			return this;
+		}
+		
 		public Builder setColor(Color color){
 			this.color = color;
 			return this;
@@ -89,11 +103,31 @@ public class UnloadedInvoice {
 		}
 	}
 	
+	public Date getFormattedDateDocument(){
+		Date date;
+		try {
+			//date = new SimpleDateFormat("dd.MM.yyyy").parse(getDateDocument());
+			date = InvoiceDateFormat.string2DateSmallDot(getDateDocument());
+		} catch (ParseException e) {
+			date = null;
+		}
+		return date;
+	}
+	
 	public String toTrimString(){
-		return getUnp()+";"+getDateCommission()+";"+getNumberInvoice()+";"+getStatusInvoice()+";"+String.format("%.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%.3f",Float.parseFloat(getTotalAll()));
+		if(getDateDocument().isEmpty()){
+			return getUnp()+";"+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+getNumberInvoice()+";"+getStatusInvoice()+";"+String.format("%.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%.3f",Float.parseFloat(getTotalAll()))+";";
+		}else{
+			return getUnp()+";"+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+getNumberInvoice()+";"+getStatusInvoice()+";"+String.format("%.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%.3f",Float.parseFloat(getTotalAll()))+";"+new SimpleDateFormat("dd.MM.yyyy").format(getFormattedDateDocument());
+		}
+		
 	}
 	
 	public String toString(){
-		return getUnp()+";"+String.format("%11s", getDateCommission())+";"+String.format("%26s",getNumberInvoice())+";"+String.format("%12s", getStatusInvoice())+";"+String.format("%12.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%12.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%12.3f",Float.parseFloat(getTotalAll()));
+		if(getDateDocument().isEmpty()){
+			return String.format("%10s", getUnp())+"; "+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+String.format("%26s",getNumberInvoice())+";"+String.format("%12s", getStatusInvoice())+";"+String.format("%12.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%12.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%12.3f",Float.parseFloat(getTotalAll()))+";";
+		}else{
+			return String.format("%10s", getUnp())+"; "+new SimpleDateFormat("dd.MM.yyyy").format(getDateCommission())+";"+String.format("%26s",getNumberInvoice())+";"+String.format("%12s", getStatusInvoice())+";"+String.format("%12.3f",Float.parseFloat(getTotalCost()))+";"+String.format("%12.3f",Float.parseFloat(getTotalVat()))+";"+String.format("%12.3f",Float.parseFloat(getTotalAll()))+"; "+String.format("%14s", new SimpleDateFormat("dd.MM.yyyy").format(getFormattedDateDocument()));
+		}
 	}
 }

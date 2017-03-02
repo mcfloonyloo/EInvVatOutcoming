@@ -57,6 +57,7 @@ public class ApplicationProperties {//паттерн Singleton
 	private String filePath;			//путь к файлу выгрузки списка
 	private String dbPath;				//путь к базе данных
 	private String folderInvoicePath;	//путь к папке с ЭСЧФ
+	private String folderXsdPath;		//путь к папке с шаблонами XSD
 	
 	private String urlService;			//сетевой путь к сервису ЭСЧФ
 	
@@ -73,6 +74,8 @@ public class ApplicationProperties {//паттерн Singleton
 	public void setDbPath(String dbPath){this.dbPath = dbPath;}
 	public String getFolderInvoicePath(){return this.folderInvoicePath;}
 	public void setFolderInvoicePath(String folderInvoicePath){this.folderInvoicePath = folderInvoicePath;}
+	public String getFolderXsdPath(){return this.folderXsdPath;}
+	public void setFolderXsdPath(String folderXsdPath){this.folderXsdPath = folderXsdPath;}
 	
 	public String getUrlService(){return this.urlService;}
 	public void setUrlService(String urlService){this.urlService = urlService;}
@@ -86,6 +89,7 @@ public class ApplicationProperties {//паттерн Singleton
 		this.filePath = build.filePath;
 		this.dbPath = build.dbPath;
 		this.folderInvoicePath = build.folderInvoicePath;
+		this.folderXsdPath = build.folderXsdPath;
 		
 		this.urlService = build.urlService;
 		
@@ -100,6 +104,7 @@ public class ApplicationProperties {//паттерн Singleton
 			properties.setProperty("path.file", this.filePath);
 			properties.setProperty("path.db", this.dbPath);
 			properties.setProperty("path.folder.invoice",this.folderInvoicePath);
+			properties.setProperty("path.folder.xsd", this.folderXsdPath);
 			
 			properties.setProperty("url.service", this.urlService);
 			properties.setProperty("menuitem.loadfile", String.valueOf(this.loadfileMenuitem));
@@ -120,6 +125,7 @@ public class ApplicationProperties {//паттерн Singleton
 		private String filePath;
 		private String dbPath;
 		private String folderInvoicePath; 
+		private String folderXsdPath;
 		
 		private String urlService;
 		
@@ -145,6 +151,7 @@ public class ApplicationProperties {//паттерн Singleton
 					this.filePath = prop.getProperty("path.file");
 					this.dbPath = prop.getProperty("path.db");
 					this.folderInvoicePath = prop.getProperty("path.folder.invoice");
+					this.folderXsdPath = prop.getProperty("path.folder.xsd");
 					
 					this.urlService = prop.getProperty("url.service");
 					
@@ -155,10 +162,11 @@ public class ApplicationProperties {//паттерн Singleton
 
 					JOptionPane.showMessageDialog(null, "Файл настроек не обнаружен."+System.lineSeparator()+"Будут загружены стандартные настройки","Внимание",JOptionPane.WARNING_MESSAGE);
 					this.libraryPath = "C:\\Program Files\\Avest\\AvJCEProv\\win32;";
-					this.classPath = ".\\jar\\*;C:\\Program Files\\Avest\\AvJCEProv\\*;";				
+					this.classPath = ".\\lib\\*;C:\\Program Files\\Avest\\AvJCEProv\\*;";				
 					this.filePath = "output.txt";
 					this.dbPath = "database.sqlite ";
 					this.folderInvoicePath = "C:\\";
+					this.folderXsdPath = ".\\xsd\\";
 					
 					this.urlService = "https://ws.vat.gov.by:443/InvoicesWS/services/InvoicesPort?wsdl";
 					
@@ -172,6 +180,7 @@ public class ApplicationProperties {//паттерн Singleton
 				this.filePath = "";
 				this.dbPath = "";
 				this.folderInvoicePath = "";
+				this.folderXsdPath = "";
 				
 				this.urlService = "";
 				
@@ -201,6 +210,7 @@ public class ApplicationProperties {//паттерн Singleton
 		if((this.getFilePath() == null)?(temp.getFilePath() != null):!this.getFilePath().trim().equals(temp.getFilePath().trim())){return false;}
 		if((this.getDbPath() == null)?(temp.getDbPath() != null):!this.getDbPath().trim().equals(temp.getDbPath().trim())){return false;}
 		if((this.getFolderInvoicePath() == null)?(temp.getFolderInvoicePath() != null):!this.getFolderInvoicePath().trim().equals(temp.getFolderInvoicePath().trim())){return false;}
+		if((this.getFolderXsdPath() == null)?(temp.getFolderXsdPath() != null):!this.getFolderXsdPath().trim().equals(temp.getFolderXsdPath().trim())){return false;}
 		if((this.getUrlService() == null)?(temp.getUrlService() != null):!this.getUrlService().trim().equals(temp.getUrlService().trim())){return false;}
 		if(this.getLoadfileMenuitem() != temp.getLoadfileMenuitem()){return false;}
 		return true;

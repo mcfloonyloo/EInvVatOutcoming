@@ -1,7 +1,6 @@
 package by.gomelagro.outcoming.gui.frames.folder.component;
 
 import java.awt.Color;
-
 import javax.swing.JCheckBox;
 
 public class JFileCheckBox extends JCheckBox {
@@ -11,7 +10,8 @@ public class JFileCheckBox extends JCheckBox {
 	private static final long serialVersionUID = 1L;
 
 	private String value;
-	private Color color;
+	private Color foreColor;
+	private Color backColor;
 
 	public JFileCheckBox(String value, boolean selected) {
 		super(value == null ? "" : "" + value, selected);
@@ -19,33 +19,49 @@ public class JFileCheckBox extends JCheckBox {
 	}
 	
 	public JFileCheckBox(Builder build){
-		super(build.value == null ? "" : "" + build.value, build.selected);
+		super(build.value == null ? "" : "" + build.value, build.check);
 		this.value = build.value;
-		this.color = build.color;
-		setSelected(build.selected);
+		this.foreColor = build.foreColor;
+		this.backColor = build.backColor;
+		setSelected(build.check);
+		setBlocked(build.block);		
 	}
 
-	public boolean isSelected() {
+	public boolean isChecked() {
 		return super.isSelected();
 	}
 
-	public void setSelected(boolean selected) {
-		super.setSelected(selected);
+	public void setChecked(boolean check) {
+		super.setSelected(check);
 	}
 
+	public boolean isBlocked(){
+		return !super.isEnabled();
+	}
+	
+	public void setBlocked(boolean selected) {
+		super.setEnabled(!selected);
+	}
 	
 	public String getValue() {
 		return value;
 	}
 	
-	public Color getColor(){
-		return color;
+	public Color getForeColor(){
+		return foreColor;
+	}
+	
+	public Color getBackColor(){
+		return backColor;
 	}
 	
 	public static class Builder{
 		private String value;
-		private Color color;	
-		private boolean selected;
+		private Color foreColor;
+		private Color backColor;
+		
+		private boolean check;
+		private boolean block;
 		
 		public Builder(){}
 		
@@ -54,13 +70,23 @@ public class JFileCheckBox extends JCheckBox {
 			return this;
 		}
 		
-		public Builder setColor(Color color){
-			this.color = color;
+		public Builder setForeColor(Color foreColor){
+			this.foreColor = foreColor;
 			return this;
 		}
 		
-		public Builder setSelected(boolean selected){
-			this.selected = selected;
+		public Builder setBackColor(Color backColor){
+			this.backColor = backColor;
+			return this;
+		}
+		
+		public Builder setChecked(boolean check){
+			this.check = check;
+			return this;
+		}
+		
+		public Builder setBlocked(boolean block){
+			this.block = block;
 			return this;
 		}
 
