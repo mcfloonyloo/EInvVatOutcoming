@@ -97,4 +97,17 @@ public class Certificate {
 	public String getAddress(){return this.address;}
 	public String getOthers(){return this.others;}
 	public String getEmail(){return this.email;}
+	
+
+	public String getUnp(){
+		String unp = "";
+		if(Certificate.getInstance().getUnp2() == ""){//если unp2 пустой
+			if(Certificate.getInstance().getUnp101() != ""){//если unp101 не пустой
+				unp = Certificate.getInstance().getUnp101();
+			}
+		}else{
+			unp = Certificate.getInstance().getUnp2();
+		}
+		return unp;
+	}
 }

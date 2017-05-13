@@ -45,6 +45,7 @@ public class FileListCellRenderer extends DefaultListCellRenderer  implements Li
 		 	}
 		    checkbox.setFocusPainted(false);
 		    checkbox.setBorderPainted(true);
+		    checkbox.setToolTip(((JFileCheckBox) value).getToolTip());
 		    return checkbox;
 		
 		} else {

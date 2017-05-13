@@ -10,17 +10,29 @@ public class JFileCheckBox extends JCheckBox {
 	private static final long serialVersionUID = 1L;
 
 	private String value;
+	private String valueFull;
 	private Color foreColor;
 	private Color backColor;
 
-	public JFileCheckBox(String value, boolean selected) {
+	public JFileCheckBox(String value, String valueFull, boolean selected) {
 		super(value == null ? "" : "" + value, selected);
+		this.valueFull = valueFull;
 		this.value = value;
+	}
+	
+	public JFileCheckBox setToolTip(String line){
+		this.setToolTipText(line);
+		return this;
+	}
+	
+	public String getToolTip(){
+		return this.getToolTipText();
 	}
 	
 	public JFileCheckBox(Builder build){
 		super(build.value == null ? "" : "" + build.value, build.check);
 		this.value = build.value;
+		this.valueFull = build.valueFull;
 		this.foreColor = build.foreColor;
 		this.backColor = build.backColor;
 		setSelected(build.check);
@@ -47,6 +59,10 @@ public class JFileCheckBox extends JCheckBox {
 		return value;
 	}
 	
+	public String getValueFull() {
+		return valueFull;
+	}
+	
 	public Color getForeColor(){
 		return foreColor;
 	}
@@ -57,6 +73,7 @@ public class JFileCheckBox extends JCheckBox {
 	
 	public static class Builder{
 		private String value;
+		private String valueFull;
 		private Color foreColor;
 		private Color backColor;
 		
@@ -67,6 +84,11 @@ public class JFileCheckBox extends JCheckBox {
 		
 		public Builder setValue(String value){
 			this.value = value;
+			return this;
+		}
+		
+		public Builder setValueFull(String valueFull){
+			this.valueFull = valueFull;
 			return this;
 		}
 		

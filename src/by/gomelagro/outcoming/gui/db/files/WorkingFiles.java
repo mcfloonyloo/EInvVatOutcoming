@@ -13,7 +13,8 @@ public class WorkingFiles {
 		List<String> lines = new ArrayList<String>();
 		String line = "";
 		line = reader.readLine()+reader.readLine();
-		if(line.trim() == "INVOICESH;Исходный СХ"){
+		//if(line.trim() == "INVOICESH;Исходный СХ"){
+		if(line.trim() == "INVOICE;Исходный"){
 			reader.close();
 			return null;
 		}		

@@ -1,6 +1,7 @@
 package by.gomelagro.outcoming.gui.db;
 
 import java.awt.Color;
+import java.awt.HeadlessException;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -16,6 +17,10 @@ import javax.swing.JOptionPane;
 
 import by.gomelagro.outcoming.format.date.InvoiceDateFormat;
 import by.gomelagro.outcoming.gui.db.files.data.UnloadedInvoice;
+import by.gomelagro.outcoming.gui.db.number.NumberInvoice;
+import by.gomelagro.outcoming.gui.frames.invoice.Invoice;
+import by.gomelagro.outcoming.gui.frames.invoice.data.list.BooleanList;
+import by.gomelagro.outcoming.gui.frames.invoice.verification.Verification;
 import by.gomelagro.outcoming.gui.frames.list.MonthYearItem;
 import by.gomelagro.outcoming.gui.frames.report.component.ResultFont;
 import by.gomelagro.outcoming.status.Status;
@@ -26,20 +31,32 @@ public class WorkingOutcomingTable {
 		
 		//наличие имени файла в базе данных
 		public static boolean isNumberInvoice(String number) throws SQLException{
-			String sql = "SELECT COUNT(*) AS COUT FROM OUTCOMING WHERE NUMBERINVOICE = '"+number+"'";
+			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE NUMBERINVOICE = '"+number+"'";
 			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
 			ResultSet set = statement.executeQuery(sql);
 			int count = -1;
 			while(set.next()){
-				count = set.getInt("COUT");
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}
+		
+		//наличие ID статуса ЭСЧФ в базе данных
+		public static boolean isOutcomingStatusId(String id) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING_STATUSES WHERE ID = "+id;
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
 			}
 			if(count == 1){return true;}else{return false;}
 		}
 		
 		//количество всех ЭСЧФ в таблице
 		public static int getCountAll(){
-			
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL";
+			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING INNER JOIN OUTCOMING_STATUSES ON OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID "+
+						 "WHERE OUTCOMING_STATUSES.STATUSINVOICEEN IS NOT NULL";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -55,7 +72,8 @@ public class WorkingOutcomingTable {
 		
 		//количество определенной ЭСЧФ в таблице 
 		public static int getCountRecord(String number){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE NUMBERINVOICE = '"+number+"'";
+			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING " +
+						 "WHERE OUTCOMING.NUMBERINVOICE = '"+number+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -71,7 +89,9 @@ public class WorkingOutcomingTable {
 		
 		//количество всех ЭСЧФ в таблице за год
 		public static int getCountAllInYear(String date){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+			String sql ="SELECT COUNT(*) AS 'COUNT' FROM OUTCOMING_STATUSES INNER JOIN OUTCOMING ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID "+
+						"WHERE OUTCOMING_STATUSES.ID IN (SELECT MAX(OUTCOMING_STATUSES.ID) AS 'MAX' FROM OUTCOMING_STATUSES GROUP BY 'MAX', OUTCOMING_STATUSES.OUTCOMINGID)"+
+						"AND strftime('%Y', OUTCOMING.DATETRANSACTION) = '"+date+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -85,9 +105,12 @@ public class WorkingOutcomingTable {
 			}
 		}
 		
-		//количество подписанных ЭСЧФ в таблице
+		//количество подписанных ЭСЧФ в таблице за год
 		public static int getCountCompletedInYear(String date){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED_SIGNED' AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+			String sql = "SELECT COUNT(*) AS 'COUNT' FROM OUTCOMING_STATUSES INNER JOIN OUTCOMING ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID "+
+						 "WHERE OUTCOMING_STATUSES.ID IN (SELECT MAX(OUTCOMING_STATUSES.ID) AS 'MAX' FROM OUTCOMING_STATUSES GROUP BY 'MAX', OUTCOMING_STATUSES.OUTCOMINGID "+
+						 "HAVING (OUTCOMING_STATUSES.STATUSINVOICEEN = 'COMPLETED_SIGNED')) "+
+						 "AND strftime('%Y',DATETRANSACTION) = '"+date+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -102,9 +125,12 @@ public class WorkingOutcomingTable {
 		}
 		
 		
-		//количество неподписанных ЭСЧФ в таблице
+		//количество неподписанных ЭСЧФ в таблице за год
 		public static int getCountUncompletedInYear(String date){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED' AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+			String sql ="SELECT COUNT(*) AS 'COUNT' FROM OUTCOMING_STATUSES INNER JOIN OUTCOMING ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID "+
+					 	"WHERE OUTCOMING_STATUSES.ID IN (SELECT MAX(OUTCOMING_STATUSES.ID) AS 'MAX' FROM OUTCOMING_STATUSES GROUP BY 'MAX', OUTCOMING_STATUSES.OUTCOMINGID "+
+					 	"HAVING (OUTCOMING_STATUSES.STATUSINVOICEEN = 'COMPLETED')) "+
+					 	"AND strftime('%Y',DATETRANSACTION) = '"+date+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -118,9 +144,12 @@ public class WorkingOutcomingTable {
 			}
 		}
 		
-		//количество отменённых ЭСЧФ
+		//количество отменённых ЭСЧФ за год
 		public static int getCountCancelledInYear(String date){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'CANCELLED' OR STATUSINVOICEEN = 'ON_AGREEMENT_CANCEL') AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+			String sql ="SELECT COUNT(*) AS 'COUNT' FROM OUTCOMING_STATUSES INNER JOIN OUTCOMING ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID "+
+					 	"WHERE OUTCOMING_STATUSES.ID IN (SELECT MAX(OUTCOMING_STATUSES.ID) AS 'MAX' FROM OUTCOMING_STATUSES GROUP BY 'MAX', OUTCOMING_STATUSES.OUTCOMINGID "+
+					 	"HAVING (OUTCOMING_STATUSES.STATUSINVOICEEN = 'CANCELLED')) "+
+					 	"AND strftime('%Y',DATETRANSACTION) = '"+date+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -134,10 +163,12 @@ public class WorkingOutcomingTable {
 			}
 		}
 		
-		//количество ЭСЧФ неопределенного статуса в таблице 
+		//количество ЭСЧФ неопределенного статуса в таблице за год
 		public static int getCountUndeterminedInYear(String date){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'ON_AGREEMENT' OR "
-					+ "STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND' OR STATUSINVOICEEN = 'ERROR') AND strftime('%Y',DATECOMMISSION) = '"+date+"'";
+			String sql ="SELECT COUNT(*) AS 'COUNT' FROM OUTCOMING_STATUSES INNER JOIN OUTCOMING ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID "+
+						"WHERE OUTCOMING_STATUSES.ID IN (SELECT MAX(OUTCOMING_STATUSES.ID) AS 'MAX' FROM OUTCOMING_STATUSES GROUP BY 'MAX', OUTCOMING_STATUSES.OUTCOMINGID "+
+					 	"HAVING (OUTCOMING_STATUSES.STATUSINVOICEEN = 'ON_AGREEMENT' OR OUTCOMING_STATUSES.STATUSINVOICEEN = 'IN_PROGRESS' OR OUTCOMING_STATUSES.STATUSINVOICEEN = 'NOT_FOUND' OR OUTCOMING_STATUSES.STATUSINVOICEEN = 'ERROR')) "+
+						"AND strftime('%Y',DATETRANSACTION) = '"+date+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -154,7 +185,10 @@ public class WorkingOutcomingTable {
 		//
 		//количество подписанных ЭСЧФ в таблице за месяц года
 		public static int getCountCompletedInMonthYear(String month, String year){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED_SIGNED' AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+			String sql ="SELECT COUNT(*) AS 'COUNT' FROM OUTCOMING_STATUSES INNER JOIN OUTCOMING ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID "+
+					 	"WHERE OUTCOMING_STATUSES.ID IN (SELECT MAX(OUTCOMING_STATUSES.ID) AS 'MAX' FROM OUTCOMING_STATUSES GROUP BY 'MAX', OUTCOMING_STATUSES.OUTCOMINGID "+
+					 	"HAVING (OUTCOMING_STATUSES.STATUSINVOICEEN = 'COMPLETED_SIGNED')) "+
+						"AND strftime('%Y',DATETRANSACTION) = '"+year+"' AND strftime('%m',DATETRANSACTION) = '"+month+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -169,7 +203,10 @@ public class WorkingOutcomingTable {
 		
 		//количество неподписанных ЭСЧФ в таблице за месяц года
 		public static int getCountUncompletedInMonthYear(String month, String year){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND STATUSINVOICEEN = 'COMPLETED' AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+			String sql ="SELECT COUNT(*) AS 'COUNT' FROM OUTCOMING_STATUSES INNER JOIN OUTCOMING ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID "+
+				 		"WHERE OUTCOMING_STATUSES.ID IN (SELECT MAX(OUTCOMING_STATUSES.ID) AS 'MAX' FROM OUTCOMING_STATUSES GROUP BY 'MAX', OUTCOMING_STATUSES.OUTCOMINGID "+
+				 		"HAVING (OUTCOMING_STATUSES.STATUSINVOICEEN = 'COMPLETED')) "+
+					 	"AND strftime('%Y',DATETRANSACTION) = '"+year+"' AND strftime('%m',DATETRANSACTION) = '"+month+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -183,7 +220,10 @@ public class WorkingOutcomingTable {
 		
 		//количество отменённых ЭСЧФ за месяц года
 		public static int getCountCancelledInMonthYear(String month, String year){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'CANCELLED' OR STATUSINVOICEEN = 'ON_AGREEMENT_CANCEL') AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+			String sql ="SELECT COUNT(*) AS 'COUNT' FROM OUTCOMING_STATUSES INNER JOIN OUTCOMING ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID "+
+				 		"WHERE OUTCOMING_STATUSES.ID IN (SELECT MAX(OUTCOMING_STATUSES.ID) AS 'MAX' FROM OUTCOMING_STATUSES GROUP BY 'MAX', OUTCOMING_STATUSES.OUTCOMINGID "+
+				 		"HAVING (OUTCOMING_STATUSES.STATUSINVOICEEN = 'CANCELLED')) "+
+				 		"AND strftime('%Y',DATETRANSACTION) = '"+year+"' AND strftime('%m',DATETRANSACTION) = '"+month+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -197,8 +237,10 @@ public class WorkingOutcomingTable {
 		
 		//количество ЭСЧФ неопределенного статуса в таблице за месяц года
 		public static int getCountUndeterminedInMonthYear(String month, String year){
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'ON_AGREEMENT' OR "
-					+ "STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND' OR STATUSINVOICEEN = 'ERROR') AND strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+			String sql ="SELECT COUNT(*) AS 'COUNT' FROM OUTCOMING_STATUSES INNER JOIN OUTCOMING ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID "+
+						"WHERE OUTCOMING_STATUSES.ID IN (SELECT MAX(OUTCOMING_STATUSES.ID) AS 'MAX' FROM OUTCOMING_STATUSES GROUP BY 'MAX', OUTCOMING_STATUSES.OUTCOMINGID "+
+						"HAVING (OUTCOMING_STATUSES.STATUSINVOICEEN = 'ON_AGREEMENT' OR OUTCOMING_STATUSES.STATUSINVOICEEN = 'IN_PROGRESS' OR OUTCOMING_STATUSES.STATUSINVOICEEN = 'NOT_FOUND' OR OUTCOMING_STATUSES.STATUSINVOICEEN = 'ERROR')) "+
+						"AND strftime('%Y',DATETRANSACTION) = '"+year+"' AND strftime('%m',DATETRANSACTION) = '"+month+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				int count = -1;
 				ResultSet set = statement.executeQuery();
@@ -210,88 +252,220 @@ public class WorkingOutcomingTable {
 			}
 		}	
 		//
+		
+	}
+	
+	public static class Field{
+		
+		public static String getOutcomingStatus(String outcomingId){
+			String status = "";
+			try {
+				if(WorkingOutcomingTable.Count.isOutcomingStatusId(outcomingId)){
+					String sql = "SELECT MAX(ID) AS 'MAX', STATUSINVOICEEN FROM OUTCOMING_STATUSES WHERE OUTCOMINGID = "+outcomingId;
+					try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+						ResultSet set = statement.executeQuery();
+						if(set != null){
+							while(set.next()){
+								status = set.getString(2).trim();
+							}
+						}
+					} catch (SQLException e) {
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			} catch (HeadlessException | SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return status;
+		}
+		
+		public static int getOutcomingId(String number){
+			String sql = "SELECT ID FROM OUTCOMING WHERE NUMBERINVOICE = "+number;
+			int id = -1; 
+			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+				ResultSet set = statement.executeQuery();
+				while(set.next()){id = set.getInt(1);}
+			} catch (SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return id;
+		}
+		
 	}
 	
 	public static class Insert{
 		
 		//добавление ЭСЧФ
-		public static boolean insertIncoming(String[] fields) throws SQLException, ParseException{
+		public static int insertOutcomingFile(Invoice invoice){
 			String sql = "INSERT INTO OUTCOMING("
-					+ "UNP, " 				// 01 06
-					+ "CODECOUNTRY, " 		// 02 08
-					+ "NAME, " 				// 03 09
-					+ "NUMBERINVOICE, " 	// 04 12
-					+ "TYPEINVOICE, " 		// 05 13
-					+ "STATUSINVOICERU, " 	// 06 14
-					+ "STATUSINVOICEEN, " 	// 07 
-					+ "DATEISSUE, " 		// 08 15
-					+ "DATECOMMISSION, " 	// 09 16
-					+ "DATESIGNATURE, " 	// 10 17
-					+ "BYINVOICE, " 		// 11 18
-					+ "DATECANCELLATION, " 	// 12 19
-					+ "TOTALEXCISE, " 		// 13 20
-					+ "TOTALVAT, " 			// 14 21
-					+ "TOTALALL, " 			// 15 22
-					+ "TOTALCOST, " 		// 16 
-					+ "DATEDOCUMENT)" 		// 17 29
-					+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-			boolean result = false;
-				PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
-				statement.setString(1,  fields[6]);
-				statement.setString(2,  fields[8]);
-				statement.setString(3,  fields[9]);
-				statement.setString(4,  fields[12]);
-				statement.setString(5,  fields[13]);
-				statement.setString(6,  fields[14]);
-				statement.setString(7, Status.valueRuOf(fields[14]));
-				if(fields[15].trim().length() > 0){
-					statement.setString(8,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[15])));
+					+ "UNP, " 				// 01
+					+ "CODECOUNTRY, " 		// 02
+					+ "NAME, " 				// 03
+					+ "NUMBERINVOICE, " 	// 04
+					+ "TYPEINVOICE, " 		// 05
+					+ "DATEISSUE, " 		// 06
+					+ "DATETRANSACTION, " 	// 07
+					+ "BYINVOICE, " 		// 08
+					+ "TOTALEXCISE, " 		// 09
+					+ "TOTALVAT, " 			// 10
+					+ "TOTALALL, " 			// 11
+					+ "TOTALCOST)" 			// 12
+					+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+			boolean isAdd = true;
+			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+				statement.setString(1,  invoice.getRecipient().getUnp().trim());
+				statement.setString(2,  invoice.getRecipient().getCountryCode().trim());
+				statement.setString(3,  invoice.getRecipient().getName().trim());
+				statement.setString(4,  invoice.getGeneral().getNumber().trim());
+				statement.setString(5,  invoice.getGeneral().getDocumentType().trim());
+				if(Verification.verifyField(invoice.getGeneral().getDateIssuance().trim())){
+					if(invoice.getGeneral().getDateIssuance().trim().length() > 0){
+						//statement.setString(6, InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(invoice.getGeneral().getDateIssuance().trim())));
+						statement.setString(6, invoice.getGeneral().getDateIssuance().trim());
+					}else{
+						statement.setString(6, "");
+					}
 				}else{
-					statement.setString(8,  fields[15]);
+					statement.setString(6, "");
 				}
-				if(fields[16].trim().length() > 0){
-					statement.setString(9,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[16])));
+				
+				if(invoice.getGeneral().getDateTransaction().trim().length() > 0){
+					//statement.setString(7, InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(invoice.getGeneral().getDateTransaction().trim())));
+					statement.setString(7, invoice.getGeneral().getDateTransaction().trim());
 				}else{
-					statement.setString(9,  fields[16]);
+					statement.setString(7, "");
 				}
-				if(fields[17].trim().length() > 0){
-					statement.setString(10,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[17])));
+				
+				if(Verification.verifyField(invoice.getGeneral().getInvoice())){
+					statement.setString(8, invoice.getGeneral().getInvoice().trim());
 				}else{
-					statement.setString(10,  fields[17]);
+					statement.setString(8, "");
 				}
-				statement.setString(11, fields[18]);
-				if(fields[19].trim().length() > 0){
-					statement.setString(12,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[19])));
-				}else{
-					statement.setString(12,  fields[19]);
-				}
-				statement.setString(13, fields[20].replace(",", "."));
-				statement.setString(14, fields[21].replace(",", "."));
-				statement.setString(15, fields[22].replace(",", "."));
-				statement.setString(16, String.format("%.3f",(Float.parseFloat(fields[22].replace(",", "."))-Float.parseFloat(fields[21].replace(",", "."))-Float.parseFloat(fields[20].replace(",", ".")))));
-				if(fields[29].trim().length() > 0){
-					statement.setString(17, fields[29]);
-				}else{
-					statement.setString(17, fields[29]);
-				}
+				statement.setString(9, invoice.getRoster().getTotalExcise().trim().replace(",", "."));
+				statement.setString(10, invoice.getRoster().getTotalVat().trim().replace(",", "."));
+				statement.setString(11, invoice.getRoster().getTotalCostVat().trim().replace(",", "."));
+				statement.setString(12, invoice.getRoster().getTotalCost().replace(",", "."));
 				statement.executeUpdate();
-				result = true;
-				return result;		
+			}catch(SQLException e){
+				isAdd = false;
+			}
+			
+			if(isAdd){
+				String sqlId = "select last_insert_rowid()";
+				try(PreparedStatement statementID = ConnectionDB.getInstance().getConnection().prepareStatement(sqlId)){
+					int count = -1;
+					ResultSet set = statementID.executeQuery();
+					while(set.next()){
+						count = set.getInt(1);
+					}
+					return count;
+				} catch (SQLException e) {
+					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					return -1;
+				}	
+			}else{
+				return -1;
+			}
 		}
 		
+		//добавление статуса ЭСЧФ
+		public static boolean insertOutcomingStatusesFile(String outcomingId, String statusEn, String statusRu){
+			String sql = "INSERT INTO OUTCOMING_STATUSES("
+					+ "OUTCOMINGID, " 			// 01
+					+ "STATUSINVOICEEN, " 		// 02
+					+ "STATUSINVOICERU) " 		// 03
+					+ " VALUES (?,?,?)";
+			boolean result = false;
+			try (PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+				statement.setString(1,  outcomingId.trim());
+				statement.setString(2, statusEn);
+				statement.setString(3, statusRu);
+				statement.executeUpdate();
+				result = true;
+			} catch (SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return result;		
+		}
+
+		//добавление документов ЭСЧФ
+		public static boolean insertOutcomingDocumentsFile(int outcomingId, Invoice invoice){
+			String sql = "INSERT INTO OUTCOMING_DOCUMENTS("
+					+ "OUTCOMINGID, " 		// 01
+					+ "CODEDOCUMENT, " 		// 02
+					+ "DATEDOCUMENT, " 		// 03
+					+ "BLANKCODEDOCUMENT, "	// 04
+					+ "SERIADOCUMENT, "		// 05
+					+ "NUMBERDOCUMENT)"		// 06
+					+ " VALUES (?,?,?,?,?,?)";
+			BooleanList list = new BooleanList();
+			if(Verification.verifyList(invoice.getDeliveryCondition().getContract().getDocuments())){
+				for(int index = 0; index < invoice.getDeliveryCondition().getContract().getDocuments().size(); index++){
+					try{
+						PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
+						statement.setInt(1,  outcomingId);
+						
+						if(Verification.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType())){
+							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode().trim())){
+								statement.setString(2, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode().trim());
+							}else{
+								statement.setString(2, "");
+							}
+						}else{
+							statement.setString(2, "");
+						}
+						
+						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate().trim())){
+							if(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate().trim().length() > 0){
+								//statement.setString(3, InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate().trim())));
+								statement.setString(3, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate());
+							}else{
+								statement.setString(3, "");
+							}
+						}else{
+							statement.setString(3, "");
+						}
+						
+						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode().trim())){
+							statement.setString(4, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode().trim());
+						}else{
+							statement.setString(4, "");
+						}
+						
+						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria().trim())){
+							statement.setString(5, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria().trim());
+						}else{
+							statement.setString(5, "");
+						}
+						
+						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber().trim())){
+							statement.setString(6, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber().trim());
+						}else{
+							statement.setString(6, "");
+						}
+						
+						statement.executeUpdate();
+						list.add(true);
+					}catch (SQLException /*| ParseException*/ e) {
+						list.add(false);
+					}
+				}
+			}
+			return list.getResult();		
+		}
 	}
 	
 	public static class Lists{
 		
 		//список всех ЭСЧФ для обновления
-		public static List<String> selectNumbersInvoice(){
-			List<String> list = new ArrayList<String>();
-			String sql = "SELECT NUMBERINVOICE FROM OUTCOMING";
+		public static List<NumberInvoice> selectNumbersInvoice(){
+			List<NumberInvoice> list = new ArrayList<NumberInvoice>();
+			String sql = "SELECT ID, NUMBERINVOICE FROM OUTCOMING";
 			try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 				list.clear();
 				ResultSet set = statement.executeQuery(sql);
 				while(set.next()){
-					list.add(set.getString(1).trim());
+					list.add(new NumberInvoice().addId(set.getString(1).trim()).addNumber(set.getString(2).trim()));
 				}
 				return list;
 			} catch (SQLException e) {
@@ -301,15 +475,18 @@ public class WorkingOutcomingTable {
 		}
 		
 		//список неподписанных ЭСЧФ для обновления
-		public static List<String> selectNotSignedNumbersInvoice(){
-			List<String> list = new ArrayList<String>();
-			String sql = "SELECT NUMBERINVOICE FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND (STATUSINVOICEEN = 'COMPLETED' "
-					+ "OR STATUSINVOICEEN = 'ON_AGREEMENT' OR STATUSINVOICEEN = 'IN_PROGRESS' OR STATUSINVOICEEN = 'NOT_FOUND')";
+		public static List<NumberInvoice> selectNotSignedNumbersInvoice(){
+			List<NumberInvoice> list = new ArrayList<NumberInvoice>();
+			String sql = "SELECT MAX(OUTCOMING_STATUSES.ID) AS 'M', OUTCOMING_STATUSES.OUTCOMINGID, OUTCOMING_STATUSES.STATUSINVOICEEN FROM OUTCOMING "+
+						 "INNER JOIN OUTCOMING_STATUSES ON OUTCOMING_STATUSES.OUTCOMINGID = OUTCOMING.ID GROUP BY 'M', OUTCOMING.NUMBERINVOICE "+
+						 "HAVING OUTCOMING_STATUSES.STATUSINVOICEEN IS NOT NULL AND (OUTCOMING_STATUSES.STATUSINVOICEEN = 'COMPLETED' "+
+						 "OR OUTCOMING_STATUSES.STATUSINVOICEEN = 'ON_AGREEMENT' OR OUTCOMING_STATUSES.STATUSINVOICEEN = 'IN_PROGRESS' "+
+						 "OR OUTCOMING_STATUSES.STATUSINVOICEEN = 'NOT_FOUND')";
 			try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 				list.clear();
 				ResultSet set = statement.executeQuery(sql);
 				while(set.next()){
-					list.add(set.getString(1).trim());
+					list.add(new NumberInvoice().addId(set.getString(1).trim()).addNumber(set.getString(2).trim()));
 				}
 				return list;
 			} catch (SQLException e) {
@@ -325,31 +502,33 @@ public class WorkingOutcomingTable {
 		//список ЭСЧФ для отчета
 		public static List<UnloadedInvoice> selectSignedNumbersInvoice(){
 			List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-			String sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL, DATEDOCUMENT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL";
+			String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, MIN(OUTCOMING_DOCUMENTS.DATEDOCUMENT) AS 'MIN' "+
+						"FROM (OUTCOMING INNER JOIN OUTCOMING_STATUSES ON OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID) LEFT JOIN OUTCOMING_DOCUMENTS ON OUTCOMING_DOCUMENTS.OUTCOMINGID = OUTCOMING.ID "+
+						"GROUP BY OUTCOMING.NUMBERINVOICE "+
+						"HAVING OUTCOMING_STATUSES.STATUSINVOICEEN IS NOT NULL ";
 			try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 				list.clear();
 				ResultSet set = statement.executeQuery(sql);
 				String statusRu = "";
 				while(set.next()){
-					if(set.getString("STATUSINVOICEEN").trim().equals("COMPLETED_SIGNED")){
+					if(set.getString("OUTCOMING_STATUSES.STATUSINVOICEEN").trim().equals("COMPLETED_SIGNED")){
 						statusRu = "Подписан";
 					}else{
 						statusRu = "Не подписан";
 					}
-					String dateDocument = "";
-					if(set.getString("DATEDOCUMENT").length()>0){
-						dateDocument = InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATEDOCUMENT").trim()));
+					java.util.Date dateDocument = null;
+					if(set.getString("MIN") != null){
+						dateDocument = new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("MIN").trim())));
 					}
 					list.add(new UnloadedInvoice.Builder()
 							.setUnp(set.getString("UNP").trim())
-							//.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateSmallDash(set.getString("DATECOMMISSION").trim())))
-							.setDateCommission(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim()))))
+							.setDateTransaction(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATETRANSACTION").trim()))))
 							.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 							.setStatusInvoiceRu(statusRu)
 							.setTotalCost(set.getString("TOTALCOST").trim())
 							.setTotalVat(set.getString("TOTALVAT").trim())
 							.setTotalAll(set.getString("TOTALALL").trim())
-							.setDateDocument(dateDocument.trim())
+							.setDateDocument(dateDocument)
 							.build());
 				}
 				return list;
@@ -362,7 +541,11 @@ public class WorkingOutcomingTable {
 		//список ЭСЧФ для отчета на дату
 		public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtDate(java.util.Date date, Comparator<UnloadedInvoice> comparator, String status){
 			List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-			String sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL, DATEDOCUMENT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION = '"+date.toString()+"' "+status+" ORDER BY strftime('%Y',DATECOMMISSION), DATE(DATECOMMISSION)";
+			String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, MIN(OUTCOMING_DOCUMENTS.DATEDOCUMENT) AS 'MIN' "+
+						"FROM (OUTCOMING INNER JOIN OUTCOMING_STATUSES ON OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID) LEFT JOIN OUTCOMING_DOCUMENTS ON OUTCOMING_DOCUMENTS.OUTCOMINGID = OUTCOMING.ID "+
+						"GROUP BY OUTCOMING.NUMBERINVOICE "+
+						"HAVING OUTCOMING_STATUSES.STATUSINVOICEEN IS NOT NULL "+
+						"AND OUTCOMING.DATETRANSACTION = '"+date.toString()+"' "+status+" ORDER BY strftime('%Y',OUTCOMING.DATETRANSACTION), DATE(OUTCOMING.DATETRANSACTION)";
 			try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 				list.clear();
 				ResultSet set = statement.executeQuery(sql);
@@ -380,20 +563,19 @@ public class WorkingOutcomingTable {
 						statusRu = "Не подписан";
 						color = ResultFont.getRed();
 					}
-					String dateDocument = "";
-					if(set.getString("DATEDOCUMENT").length()>0){
-						dateDocument = InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATEDOCUMENT").trim()));
+					java.util.Date dateDocument = null;
+					if(set.getString("MIN") != null){
+						dateDocument = new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("MIN").trim())));
 					}
 					list.add(new UnloadedInvoice.Builder()
 							.setUnp(set.getString("UNP").trim())
-							//.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim())))
-							.setDateCommission(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim()))))
+							.setDateTransaction(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATETRANSACTION").trim()))))
 							.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 							.setStatusInvoiceRu(statusRu)
 							.setTotalCost(set.getString("TOTALCOST").trim())
 							.setTotalVat(set.getString("TOTALVAT").trim())
 							.setTotalAll(set.getString("TOTALALL").trim())
-							.setDateDocument(dateDocument.trim())
+							.setDateDocument(dateDocument)
 							.setColor(color)
 							.build());
 				}
@@ -408,7 +590,11 @@ public class WorkingOutcomingTable {
 		//список ЭСЧФ для отчета на период
 		public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtBetween(java.util.Date leftDate, java.util.Date date, Comparator<UnloadedInvoice> comparator, String status){
 			List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-			String sql = "SELECT UNP, DATECOMMISSION, NUMBERINVOICE, STATUSINVOICEEN, TOTALCOST, TOTALVAT, TOTALALL, DATEDOCUMENT FROM OUTCOMING WHERE STATUSINVOICEEN IS NOT NULL AND DATECOMMISSION BETWEEN '"+leftDate.toString()+"' AND '"+date.toString()+"' "+status;
+			String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, MIN(OUTCOMING_DOCUMENTS.DATEDOCUMENT) AS 'MIN' "+
+						"FROM (OUTCOMING INNER JOIN OUTCOMING_STATUSES ON OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID) LEFT JOIN OUTCOMING_DOCUMENTS ON OUTCOMING_DOCUMENTS.OUTCOMINGID = OUTCOMING.ID "+
+						"GROUP BY OUTCOMING.NUMBERINVOICE "+
+						"HAVING OUTCOMING_STATUSES.STATUSINVOICEEN IS NOT NULL "+ 
+						"AND OUTCOMING.DATETRANSACTION BETWEEN '"+leftDate.toString()+"' AND '"+date.toString()+"' "+status;
 			try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 				list.clear();
 				ResultSet set = statement.executeQuery(sql);
@@ -426,20 +612,19 @@ public class WorkingOutcomingTable {
 						statusRu = "Не подписан";
 						color = ResultFont.getRed();
 					}
-					String dateDocument = "";
-					if(set.getString("DATEDOCUMENT").length()>0){
-						dateDocument = InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATEDOCUMENT").trim()));
+					java.util.Date dateDocument = null;
+					if(set.getString("MIN") != null){
+						dateDocument = new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("MIN").trim())));
 					}
 					list.add(new UnloadedInvoice.Builder()
 							.setUnp(set.getString("UNP").trim())
-							//.setDateCommission(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim())))
-							.setDateCommission(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATECOMMISSION").trim()))))
+							.setDateTransaction(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATETRANSACTION").trim()))))
 							.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 							.setStatusInvoiceRu(statusRu)
 							.setTotalCost(set.getString("TOTALCOST").trim())
 							.setTotalVat(set.getString("TOTALVAT").trim())
 							.setTotalAll(set.getString("TOTALALL").trim())
-							.setDateDocument(dateDocument.trim())
+							.setDateDocument(dateDocument)
 							.setColor(color)
 							.build());
 				}
@@ -480,6 +665,18 @@ public class WorkingOutcomingTable {
 			return result;
 		}
 		
+		public static boolean updateDateFromFile(String column, String date, String number) throws SQLException{
+			String sql = "UPDATE OUTCOMING SET ? = ? WHERE NUMBERINVOICE = ?";
+			boolean result = false;
+			PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
+			statement.setString(1, column.trim());
+			statement.setString(2, date.trim());
+			statement.setString(3, number.trim());
+			statement.executeUpdate();
+			result = true;
+			return result;
+		}
+		
 	}
 		
 	public static class Date{
@@ -487,7 +684,7 @@ public class WorkingOutcomingTable {
 		//список годов на основе таблицы
 		public static List<String> selectYearInvoice(){
 			List<String> list = new ArrayList<String>();
-			String sql = "SELECT strftime('%Y',DATECOMMISSION) as cYEAR FROM OUTCOMING GROUP BY cYEAR ORDER BY cYEAR DESC";
+			String sql = "SELECT strftime('%Y',DATETRANSACTION) as cYEAR FROM OUTCOMING GROUP BY cYEAR ORDER BY cYEAR DESC";
 			try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 				ResultSet set = statement.executeQuery(sql);
 				while(set.next()){
@@ -504,7 +701,7 @@ public class WorkingOutcomingTable {
 		//получение списка пар Год-Месяц 
 		public static List<MonthYearItem> selectMonthYear(String year){
 			List<MonthYearItem> list = new ArrayList<MonthYearItem>();
-			String sql = "SELECT strftime('%Y',DATECOMMISSION) as cYEAR, strftime('%m',DATECOMMISSION) as cMONTH FROM OUTCOMING GROUP BY cYEAR, cMONTH HAVING cYEAR = '"+year+"' ORDER BY cMONTH DESC";
+			String sql = "SELECT strftime('%Y',DATETRANSACTION) as cYEAR, strftime('%m',DATETRANSACTION) as cMONTH FROM OUTCOMING GROUP BY cYEAR, cMONTH HAVING cYEAR = '"+year+"' ORDER BY cMONTH DESC";
 			try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
 				ResultSet set = statement.executeQuery(sql);
 				while(set.next()){list.add(new MonthYearItem.Builder().setYear(set.getString("cYEAR")).setMonth(set.getString("cMONTH")).build());}
@@ -517,7 +714,7 @@ public class WorkingOutcomingTable {
 		
 		//получение даты начала месяца
 		public static String getStartMonthOfDate(String month, String year){
-			String sql = "SELECT date(DATECOMMISSION,'start of month') AS startMonth FROM OUTCOMING GROUP BY date(DATECOMMISSION,'start of month') HAVING strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+			String sql = "SELECT date(DATETRANSACTION,'start of month') AS startMonth FROM OUTCOMING GROUP BY date(DATETRANSACTION,'start of month') HAVING strftime('%Y',DATETRANSACTION) = '"+year+"' AND strftime('%m',DATETRANSACTION) = '"+month+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				String start = "";
 				ResultSet set = statement.executeQuery();
@@ -531,7 +728,7 @@ public class WorkingOutcomingTable {
 		
 		//получение даты конца месяца
 		public static String getEndMonthOfDate(String month, String year){
-			String sql = "SELECT date(DATECOMMISSION,'start of month','+1 month','-1 day') AS endMonth FROM OUTCOMING GROUP BY date(DATECOMMISSION,'start of month') HAVING strftime('%Y',DATECOMMISSION) = '"+year+"' AND strftime('%m',DATECOMMISSION) = '"+month+"'";
+			String sql = "SELECT date(DATETRANSACTION,'start of month','+1 month','-1 day') AS endMonth FROM OUTCOMING GROUP BY date(DATETRANSACTION,'start of month') HAVING strftime('%Y',DATETRANSACTION) = '"+year+"' AND strftime('%m',DATETRANSACTION) = '"+month+"'";
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				String start = "";
 				ResultSet set = statement.executeQuery();
@@ -543,5 +740,120 @@ public class WorkingOutcomingTable {
 			}
 		}
 	
+	}
+	
+	public static class Table{
+		
+		//получение списка столбцов
+		public static List<String> getColumns(){
+			List<String> list = new ArrayList<String>();
+			String sql = "PRAGMA table_info(outcoming) ";
+			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+				ResultSet set = statement.executeQuery();
+				while(set.next()){list.add(set.getString("name"));}
+			} catch (SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return list;
+		}
+
+		//есть ли столбец в списке столбцов?
+		public static boolean isContainsColumn(List<String> list, String column){
+			boolean result = false;
+			if(list.contains(column)){
+				result = true;
+			}
+			return result;
+		}
+		
+		//добавление столбца в таблицу
+		public static boolean addColumn(String column, String type){
+			String sql = "ALTER TABLE outcoming ADD COLUMN "+column.trim()+" "+type.trim();
+			boolean result = false;
+			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+				statement.executeUpdate();
+				result = true;
+			}catch(SQLException e){
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+				return false;
+			}
+			return result;
+		}
+	}
+	
+	public static class Additional{
+		
+		//-Страны------------------------------
+		
+		//наличие кода страны в базе данных
+		public static boolean isCountryCode(String code) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM COUNTRY WHERE CODE = '"+code+"'";
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}
+		
+		public static String getCountryName(String code){
+			String country = "";
+			try {
+				if(WorkingOutcomingTable.Additional.isCountryCode(code)){
+					String sql = "SELECT NAME FROM COUNTRY WHERE CODE = '"+code+"'";
+					try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+						ResultSet set = statement.executeQuery();
+						if(set != null){
+							while(set.next()){
+								country = set.getString(1).trim();
+							}
+						}
+					} catch (SQLException e) {
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			} catch (HeadlessException | SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return country;
+		}
+		
+		//-Типы документов---------------------
+		
+		//наличие кода страны в базе данных
+		public static boolean isTypeDocumentCode(String code) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM TYPEDOCUMENT WHERE CODE = '"+code+"'";
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}
+
+		public static String getTypeDocumentName(String code){
+			String country = "";
+			try {
+				if(WorkingOutcomingTable.Additional.isTypeDocumentCode(code)){
+					String sql = "SELECT NAME FROM TYPEDOCUMENT WHERE CODE = '"+code+"'";
+					try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+						ResultSet set = statement.executeQuery();
+						if(set != null){
+							while(set.next()){
+								country = set.getString(1).trim();
+							}
+						}
+					} catch (SQLException e) {
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}
+			} catch (HeadlessException | SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return country;
+		}
+		
 	}
 }

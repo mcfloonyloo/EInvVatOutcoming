@@ -26,6 +26,22 @@ public enum Status {
 		return value;
 	}
 	
+	public static String valueEnOf(String enStatus){
+		String value = "";
+		switch(enStatus){
+			case "COMPLETED": value = "Выставлен"; break;
+			case "COMPLETED_SIGNED": value = "Выставлен. Подписан получателем"; break;
+			case "ON_AGREEMENT": value = "На согласовании"; break;
+			case "CANCELLED": value = "Аннулирован"; break;
+			case "ON_AGREEMENT_CANCEL": value = "Выставлен. Аннулирован поставщиком"; break;
+			case "IN_PROGRESS": value = "ЭСЧФ находится в обработке. Запросите статус повторно через 3 часа"; break;
+			case "NOT_FOUND": value = "ЭСЧФ нет в базе или нет права для просмотра статуса/выгрузки документа"; break;
+			case "ERROR": value = "Ошибка при выставлении ЭСЧФ на портал"; break;
+			default: value = null; break;
+		}
+		return value;
+	}
+	
 	public String getEnValue(){
 		String value = "";
 		switch(this){

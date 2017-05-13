@@ -8,14 +8,9 @@ import java.awt.Insets;
 import java.awt.Point;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.nio.charset.Charset;
-import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
-
 import javax.swing.JButton;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
@@ -32,19 +27,22 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingWorker;
 import javax.swing.border.EmptyBorder;
 
-import by.avest.edoc.client.AvDocException;
 import by.avest.edoc.client.AvEDoc;
+import by.avest.edoc.client.AvEStatus;
 import by.avest.edoc.client.AvETicket;
 import by.avest.edoc.client.AvError;
-import by.avest.edoc.tool.ToolException;
 import by.gomelagro.outcoming.gui.db.WorkingOutcomingTable;
-import by.gomelagro.outcoming.gui.frames.folder.component.JFileCheckBox;
+import by.gomelagro.outcoming.gui.db.number.NumberInvoice;
 import by.gomelagro.outcoming.gui.frames.folder.component.JFileCheckBoxList;
+import by.gomelagro.outcoming.gui.frames.folder.component.list.FileCheckBoxList;
 import by.gomelagro.outcoming.gui.frames.folder.list.WorkingFileList;
 import by.gomelagro.outcoming.gui.frames.folder.models.FileCheckBoxListModel;
+import by.gomelagro.outcoming.gui.frames.invoice.Invoice;
+import by.gomelagro.outcoming.gui.frames.invoice.LoadInvoice;
 import by.gomelagro.outcoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.outcoming.properties.ApplicationProperties;
 import by.gomelagro.outcoming.service.EVatServiceSingleton;
+import by.gomelagro.outcoming.status.Status;
 
 public class LoadOfFolderFrame extends JFrame {
 
@@ -59,7 +57,7 @@ public class LoadOfFolderFrame extends JFrame {
 	private JFileCheckBoxList filesList;
 	
 	private JTextField folderPathTextField;
-	private JPopupMenu popup;
+	private JPopupMenu buttonPopup;
 
 	/**
 	 * Create the frame.
@@ -102,13 +100,12 @@ public class LoadOfFolderFrame extends JFrame {
 		
 		JMenu sendMenu = new JMenu("Отправление");
 		menuBar.add(sendMenu);
-		
-		JMenuItem sendMenuItem = new JMenuItem("Отправить список...");
-		sendMenuItem.addMouseListener(new MouseAdapter(){
+		/*
+		JMenuItem checkMenuItem = new JMenuItem("Проверить список");
+		checkMenuItem.addMouseListener(new MouseAdapter(){
 			@Override
 			public void mousePressed(MouseEvent me) {
 				if(EVatServiceSingleton.getInstance().isConnected()){
-					//sendListInvoices();
 					sendListInvoices();
 				}
 				else{
@@ -116,8 +113,25 @@ public class LoadOfFolderFrame extends JFrame {
 				}
 			}
 		});
-		sendMenu.add(sendMenuItem);
+		sendMenu.add(checkMenuItem);
 		
+		sendMenu.addSeparator();
+		*/
+		JMenuItem sendMenuItem = new JMenuItem("Отправить список");
+		sendMenuItem.addMouseListener(new MouseAdapter(){
+			@Override
+			public void mousePressed(MouseEvent me) {
+				if(EVatServiceSingleton.getInstance().isConnected()){
+					sendListInvoices();
+				}
+				else{
+					JOptionPane.showMessageDialog(null, "Сервис не подключен","Внимание",JOptionPane.WARNING_MESSAGE);
+				}
+				//sendListInvoices();
+			}
+		});
+		sendMenu.add(sendMenuItem);
+
 		contentPane = new JPanel();
 		contentPane.setBorder(new EmptyBorder(5, 5, 5, 5));
 		setContentPane(contentPane);
@@ -146,8 +160,8 @@ public class LoadOfFolderFrame extends JFrame {
 		contentPane.add(folderPathTextField, gbc_folderPathTextField);
 		folderPathTextField.setColumns(10);
 		
-		//контекстное меню
-		popup = new JPopupMenu();
+		//контекстное меню кнопки
+		buttonPopup = new JPopupMenu();
 		JMenuItem browseMenuItem = new JMenuItem("Обзор...");
 		browseMenuItem.addMouseListener(new MouseAdapter(){
 			@Override
@@ -163,11 +177,11 @@ public class LoadOfFolderFrame extends JFrame {
 						model.addElements(WorkingFileList.fillListOfAllFiles(folderPathTextField.getText().trim()));
 					}
 				}
-			}
+			}	
 		});
-		popup.add(browseMenuItem);
+		buttonPopup.add(browseMenuItem);
 		
-		popup.addSeparator();
+		buttonPopup.addSeparator();
 		
 		JMenuItem browseUnloadedMenuItem = new JMenuItem("Обзор... (незагруженные)");
 		browseUnloadedMenuItem.addMouseListener(new MouseAdapter(){
@@ -186,7 +200,9 @@ public class LoadOfFolderFrame extends JFrame {
 				}
 			}
 		});
-		popup.add(browseUnloadedMenuItem);
+		buttonPopup.add(browseUnloadedMenuItem);
+		
+		//контекстное меню списка
 		
 		JButton loadButton = new JButton("Загрузить");
 		loadButton.addMouseListener(new MouseAdapter() {
@@ -201,7 +217,7 @@ public class LoadOfFolderFrame extends JFrame {
 						break;
 					}
 					case MouseEvent.BUTTON3: {
-						showPopup(me);
+						showButtonPopup(me);
 						break;
 					}
 				}
@@ -230,11 +246,11 @@ public class LoadOfFolderFrame extends JFrame {
 	}
 	
 	//показать контекстное меню
-	private void showPopup(MouseEvent me){
+	private void showButtonPopup(MouseEvent me){
 		Component component = (Component) me.getSource();
 		Point point = component.getLocationOnScreen();
-		popup.show(this,0,0);
-		popup.setLocation(point.x,point.y+component.getHeight());
+		buttonPopup.show(this,0,0);
+		buttonPopup.setLocation(point.x,point.y+component.getHeight());
 	}	
 	
 	/*
@@ -292,7 +308,10 @@ public class LoadOfFolderFrame extends JFrame {
 
 			@Override
 			protected Void doInBackground() throws Exception {
-				List<JFileCheckBox> list = filesList.getCheckedItems();
+				List<NumberInvoice> listInvoice = new ArrayList<NumberInvoice>();
+				listInvoice.clear();
+				
+				FileCheckBoxList list = filesList.getCheckedItems();
 				if(list != null){
 					LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
 					int validCount = 0;
@@ -303,57 +322,57 @@ public class LoadOfFolderFrame extends JFrame {
 					for(int index=0;index<list.size();index++){
 						File file = new File(folderPathTextField.getText().trim()+"\\"+list.get(index).getValue().trim());
 						if(!(file.exists() && file.isFile())){
-							System.out.println("файл отсутствует");
+							System.err.println("Файл "+folderPathTextField.getText().trim()+"\\"+list.get(index).getValue().trim()+" отсутствует");
 							invalidCount++;
 							continue;
 						}else{
-							byte[] data;
-							try {
-								data = readFile(file);
-								String strData = new String(data,"Cp1251");
-								
+							Invoice invoice = LoadInvoice.loadFile(folderPathTextField.getText().trim()+"\\"+list.get(index).getValue().trim());
+							if(invoice != null){
 								AvEDoc doc = EVatServiceSingleton.getInstance().getService().createEDoc();
-								doc.getDocument().load(strData.getBytes(Charset.forName("UTF-8")));
-								
-								String pathXSD = doc.getDocument().getXmlNodeValue("issuance/general/documentType");
-																
-								byte[] xsdSchema = loadXsdSchema(ApplicationProperties.getInstance().getFolderXsdPath().trim(), pathXSD);
-								
-								String numberInvoice = doc.getDocument().getXmlNodeValue("issuance/general/number");
-								switch(WorkingOutcomingTable.Count.getCountRecord(numberInvoice)){
-									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+numberInvoice+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
-									case 0: {
-										if(doc.getDocument().validateXML(xsdSchema)){
+								doc.getDocument().load(invoice.getContent());
+								switch(WorkingOutcomingTable.Count.getCountRecord(invoice.getGeneral().getNumber())){
+									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+invoice.getGeneral().getNumber()+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+									case 0:{
+										if(doc.getDocument().validateXML(invoice.getXsdSchema())){
 											doc.sign();
 											validCount++;
 											AvETicket ticket = EVatServiceSingleton.getInstance().getService().sendEDoc(doc);
 											if(ticket.accepted()){
-												System.out.println("ЭСЧФ "+numberInvoice+" принята к обработке: "+ticket.getMessage());
-												acceptCount++;
+												int id = WorkingOutcomingTable.Insert.insertOutcomingFile(invoice);
+												if(id > 0){
+													if(WorkingOutcomingTable.Insert.insertOutcomingDocumentsFile(id, invoice)){
+														listInvoice.add(new NumberInvoice().addId(String.valueOf(id)).addNumber(invoice.getGeneral().getNumber()));
+														System.out.println("ЭСЧФ "+invoice.getGeneral().getNumber()+" принята к обработке: "+ticket.getMessage());
+														acceptCount++;
+													}else{
+														errorCount++;
+													}									
+												}else{
+													errorCount++;
+												}
 											}else{
 												AvError err = ticket.getLastError();
-												System.err.println("Ошибка: ЭСЧФ "+numberInvoice+" не принята к обработке: "+err.getMessage());
+												System.err.println("Ошибка: ЭСЧФ "+invoice.getGeneral().getNumber()+" не принята к обработке: "+err.getMessage());
 												errorCount++;
 											}
 										}else{
-											System.out.println("ЭСЧФ "+numberInvoice+" не корректна");
+											System.out.println("ЭСЧФ "+invoice.getGeneral().getNumber()+" не корректна");
 											invalidCount++;
 										};
+										break;
 									}
 									default:{
-										System.out.println("ЭСЧФ "+numberInvoice+" уже загружена на портал");
+										System.out.println("ЭСЧФ "+invoice.getGeneral().getNumber()+" уже загружена на портал");
 									}
 								}
-								
-							} catch (IOException | AvDocException | ToolException | ParseException e) {
-								System.err.println("Файл "+list.get(index).getValue()+": исключение класса "+e.getClass()+" - "+e.getLocalizedMessage());
+							}else{
+								System.err.println("Файл "+list.get(index).getValue()+": ошибка загрузки");
 								invalidCount++;
-								continue;
 							}
 						}
 						progress.setProgress(index);
 						if(progress.isCancelled()){
-							JOptionPane.showMessageDialog(null, "Выгрузка ЭСЧФ на сайт отменена","Внимание",JOptionPane.WARNING_MESSAGE);
+							JOptionPane.showMessageDialog(null, "Загрузка ЭСЧФ на сайт отменена","Внимание",JOptionPane.WARNING_MESSAGE);
 							System.out.println("//------");
 							continue;
 						}
@@ -363,6 +382,42 @@ public class LoadOfFolderFrame extends JFrame {
 														"        имеют ошибки при отправлении - "+errorCount+";"+System.lineSeparator()+
 														"Некорректных ЭСЧФ - "+invalidCount ,"Информация",JOptionPane.INFORMATION_MESSAGE);
 					progress.disactivated();
+					
+					if(listInvoice != null){
+						LoadFileProgressBar progressUpdate = new LoadFileProgressBar(listInvoice.size()).activated();					
+						acceptCount = 0;
+						errorCount = 0;
+						int missCount = 0;
+									
+						for(int index=0;index<listInvoice.size();index++){
+							AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(listInvoice.get(index).getNumber());
+							boolean isValid = status.verify();
+							if(isValid){
+								if(!WorkingOutcomingTable.Field.getOutcomingStatus(listInvoice.get(index).getId()).equals(status.getStatus())){
+									if(WorkingOutcomingTable.Insert.insertOutcomingStatusesFile(listInvoice.get(index).getId(), status.getStatus(), Status.valueEnOf(status.getStatus()))){
+										acceptCount++;
+									}else{
+										errorCount++;
+									}
+								}else{
+									missCount++;
+								}
+							}else{
+								errorCount++;
+							}
+							progressUpdate.setProgress(index);
+							if(progressUpdate.isCancelled()){
+								JOptionPane.showMessageDialog(null, "Обновление статусов ЭСЧФ после загрузки на сайт отменено","Внимание",JOptionPane.WARNING_MESSAGE);
+								System.out.println("//------");
+								continue;
+							}
+						}
+						JOptionPane.showMessageDialog(null, "Обновлено статусов ЭСЧФ - "+acceptCount+","+System.lineSeparator()+	
+															"имеют ошибки при обновлении - "+errorCount+","+System.lineSeparator()+
+															"пропущено ЭСЧФ - " + missCount,"Информация",JOptionPane.INFORMATION_MESSAGE);
+						progressUpdate.disactivated();
+					}
+					
 				}else{
 					JOptionPane.showMessageDialog(null, "Не выделено ни одной ЭСЧФ","Внимание",JOptionPane.WARNING_MESSAGE);
 				}
@@ -373,47 +428,95 @@ public class LoadOfFolderFrame extends JFrame {
 		worker.execute();
 	}
 	
-	private static byte[] readFile(File file) throws ToolException {
-		byte[] fileData = new byte[(int) file.length()];
-		DataInputStream dis = null;
-		try {
-			dis = new DataInputStream(new FileInputStream(file));
-			dis.readFully(fileData);
-		} catch (IOException e) {
-		} finally {
-			if (dis != null) {
-				try {
-					dis.close();
-				} catch (IOException localIOException2) {
-				}
+	/* Проверка полей
+	 * if(!invoice.verifyLimitationFormat())
+		System.err.println("ЭСЧФ "+invoice.getGeneral().getNumber()+" имеет ошибки в ограничении форматов");
+	if(!invoice.verifyMandatoryFieldFilling())
+		System.err.println("ЭСЧФ "+invoice.getGeneral().getNumber()+" имеет ошибки в обязательности заполнения полей");								
+	if(!invoice.verifyRuleFieldFilling())
+		System.err.println("ЭСЧФ "+invoice.getGeneral().getNumber()+" имеет ошибки в правилах заполнения форматов");
+	 */
+	
+	
+	/* Замена значения в поле
+	 * Document document = ConverterXml.byteArray2Xml(doc.getDocument().getEncoded());
+	
+	if(setXmlNodeValue(document,"issuance/general/documentType","TEST")){
+		Transformer transformer = TransformerFactory.newInstance().newTransformer();
+		Result output = new StreamResult(new File(folderPathTextField.getText().trim()+"\\"+list.get(index).getValue().trim()+"_"));
+		Source input = new DOMSource(document);
+		transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+		transformer.setOutputProperty(OutputKeys.METHOD, "xml");
+		transformer.transform(input, output);
+		System.out.println("Изменено");
+	}else{
+		System.out.println("Не изменено");
+	}
+	File fileConv = new File(folderPathTextField.getText().trim()+"\\"+list.get(index).getValue().trim()+"_");
+	data = readFile(fileConv);
+	String strDataConv = new String(data,"Cp1251");
+	
+	AvEDoc docConv = EVatServiceSingleton.getInstance().getService().createEDoc();
+	docConv.getDocument().load(strDataConv.getBytes(Charset.forName("UTF-8")));
+	
+	
+	pathXSD = docConv.getDocument().getXmlNodeValue("issuance/general/documentType");
+	System.out.println(pathXSD);*/
+	
+	/* установить значение
+	 * public static boolean setXmlNodeValue(Node child, String nodePath, String value){
+		boolean result = false;
+		if(nodePath == null){
+			return result;
+		}
+		
+		String elemPath = null;
+		String attrName = null;
+		int index = 0;
+		if ((index = nodePath.indexOf("@")) < 0) {
+			elemPath = nodePath;
+			attrName = null;
+		} else {
+			elemPath = nodePath.substring(0, index);
+			attrName = nodePath.substring(index + 1);
+		}
+		
+		StringTokenizer st = new StringTokenizer(elemPath, "/");
+		while (st.hasMoreTokens()) {
+			child = getChild(child, st.nextToken());
+			if (child == null) {
+				return result;
 			}
 		}
-		return fileData;
-	}
-	
-	private byte[] loadXsdSchema(String xsdFolderName, String doctype) throws ToolException {
-		File xsdFile = null;
-		doctype = (doctype == null) ? "" : doctype;
-
-		if ((doctype.equalsIgnoreCase("ORIGINAL")) || (doctype.equalsIgnoreCase("ADD_NO_REFERENCE")))
-			xsdFile = new File(xsdFolderName, "MNSATI_original.xsd");
-		else if (doctype.equalsIgnoreCase("FIXED"))
-			xsdFile = new File(xsdFolderName, "MNSATI_fixed.xsd");
-		else if (doctype.equalsIgnoreCase("ADDITIONAL"))
-			xsdFile = new File(xsdFolderName, "MNSATI_additional.xsd");
-		else {
-			throw new ToolException(new StringBuilder().append("Неизвестный тип счета-фактуры НДС '").append(doctype)
-					.append("'.").toString());
+		
+		if (attrName != null) {
+			NamedNodeMap attrsMap = child.getAttributes();
+			Node attr = attrsMap.getNamedItem(attrName);
+			if (attr != null){
+				attr.setNodeValue(value);
+				result = true;
+			}
+		} else {
+			child.setTextContent(value);
+			result = true;
 		}
-
-		if ((!(xsdFile.exists())) && (!(xsdFile.isFile()))) {
-			throw new ToolException(new StringBuilder().append("Невозможно загрузить XSD файл '")
-					.append(xsdFile.getAbsolutePath()).append("'").toString());
-		}
-
-		byte[] result = readFile(xsdFile);
-
+		
 		return result;
+	}
+	*/
+
+	/* получить ноду
+	 * private static Node getChild(Node parentNode, String childName) {
+		Node result = null;
+		NodeList providerChildren = parentNode.getChildNodes();
+		for (int i = 0; i < providerChildren.getLength(); ++i) {
+			Node node = providerChildren.item(i);
+			if (node.getNodeName().equalsIgnoreCase(childName)) {
+				result = node;
+			}
 		}
+		return result;
+	}
+	*/
 		
 }

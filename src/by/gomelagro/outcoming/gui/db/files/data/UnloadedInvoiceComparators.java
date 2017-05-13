@@ -11,13 +11,13 @@ public class UnloadedInvoiceComparators {
 	
 	public static Comparator<UnloadedInvoice> compareToDateAsc = new Comparator<UnloadedInvoice>(){
 		public int compare(UnloadedInvoice invoice1, UnloadedInvoice invoice2){
-			return invoice1.getDateCommission().compareTo(invoice2.getDateCommission());
+			return invoice1.getDateTransaction().compareTo(invoice2.getDateTransaction());
 		}
 	};
 	
 	public static Comparator<UnloadedInvoice> compareToDateDesc = new Comparator<UnloadedInvoice>(){
 		public int compare(UnloadedInvoice invoice1, UnloadedInvoice invoice2){
-			return invoice2.getDateCommission().compareTo(invoice1.getDateCommission());
+			return invoice2.getDateTransaction().compareTo(invoice1.getDateTransaction());
 		}
 	};
 	

@@ -1,6 +1,5 @@
 package by.gomelagro.outcoming.gui.frames.enstatus;
 
-import java.sql.SQLException;
 import java.util.List;
 
 import javax.swing.JOptionPane;
@@ -8,8 +7,10 @@ import javax.swing.SwingWorker;
 
 import by.avest.edoc.client.AvEStatus;
 import by.gomelagro.outcoming.gui.db.WorkingOutcomingTable;
+import by.gomelagro.outcoming.gui.db.number.NumberInvoice;
 import by.gomelagro.outcoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.outcoming.service.EVatServiceSingleton;
+import by.gomelagro.outcoming.status.Status;
 
 public class UpdateEnStatus {
 	public static void updateFull(){
@@ -18,17 +19,17 @@ public class UpdateEnStatus {
 				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
 					@Override
 					protected Void doInBackground() throws Exception {
-						List<String> list = WorkingOutcomingTable.Lists.selectNumbersInvoice();
+						List<NumberInvoice> list = WorkingOutcomingTable.Lists.selectNumbersInvoice();
 						if(list != null){
 							int errorCount = 0;
 							int mainCount = 0;
 							LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
-							try{
+							//try{
 								for(int index=0;index<list.size();index++){
-									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
+									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index).getNumber());
 									boolean isValid = status.verify();
 									if(isValid){
-										if(WorkingOutcomingTable.Update.updateStatus(status.getStatus(), list.get(index))){
+										if(WorkingOutcomingTable.Insert.insertOutcomingStatusesFile(list.get(index).getId(), status.getStatus(), Status.valueEnOf(status.getStatus()))){
 											mainCount++;
 										}else{
 											errorCount++;
@@ -40,10 +41,11 @@ public class UpdateEnStatus {
 										break;
 									}
 								}
-							} catch (SQLException e) {
+								
+							/*} catch (SQLException e) {
 								JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Обновление статусов прервано","Ошибка",JOptionPane.ERROR_MESSAGE);
 								progress.disactivated();	
-							}
+							}*/
 							JOptionPane.showMessageDialog(null, "Обновлены статусы у "+mainCount+" ЭСЧФ"+System.lineSeparator()+
 									"Не обновлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
 							progress.disactivated();
@@ -68,17 +70,17 @@ public class UpdateEnStatus {
 				SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
 					@Override
 					protected Void doInBackground() throws Exception {
-						List<String> list = WorkingOutcomingTable.Lists.selectNotSignedNumbersInvoice();
+						List<NumberInvoice> list = WorkingOutcomingTable.Lists.selectNotSignedNumbersInvoice();
 						if(list != null){
 							int errorCount = 0;
 							int mainCount = 0;
 							LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
-							try{
+							//try{
 								for(int index=0;index<list.size();index++){
-									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index));
+									AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(list.get(index).getNumber());
 									boolean isValid = status.verify();
 									if(isValid){
-										if(WorkingOutcomingTable.Update.updateStatus(status.getStatus(), list.get(index))){
+										if(WorkingOutcomingTable.Insert.insertOutcomingStatusesFile(list.get(index).getId(), status.getStatus(), Status.valueEnOf(status.getStatus()))){
 											mainCount++;
 										}else{
 											errorCount++;
@@ -90,10 +92,10 @@ public class UpdateEnStatus {
 										break;
 									}
 								}
-							}catch (SQLException e) {
+							/*}catch (SQLException e) {
 								JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Обновление статусов отменено","Ошибка",JOptionPane.ERROR_MESSAGE);
 								progress.disactivated();
-							}
+							}*/
 							JOptionPane.showMessageDialog(null, "Обновлены статусы у "+mainCount+" ЭСЧФ"+System.lineSeparator()+
 									"Не обновлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
 							progress.disactivated();

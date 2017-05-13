@@ -33,12 +33,15 @@ import javax.swing.SwingWorker;
 import javax.swing.border.BevelBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
+import by.avest.edoc.client.AvEStatus;
 import by.gomelagro.outcoming.format.date.InvoiceDateFormat;
 import by.gomelagro.outcoming.gui.console.component.JConsole;
 import by.gomelagro.outcoming.gui.db.ConnectionDB;
 import by.gomelagro.outcoming.gui.db.WorkingOutcomingTable;
 import by.gomelagro.outcoming.gui.db.files.WorkingFiles;
 import by.gomelagro.outcoming.gui.frames.enstatus.UpdateEnStatus;
+import by.gomelagro.outcoming.gui.frames.invoice.Invoice;
+import by.gomelagro.outcoming.gui.frames.invoice.LoadInvoice;
 import by.gomelagro.outcoming.gui.frames.list.JMonthPanel;
 import by.gomelagro.outcoming.gui.frames.list.MonthPanelListModel;
 import by.gomelagro.outcoming.gui.frames.list.MonthYearItem;
@@ -47,6 +50,7 @@ import by.gomelagro.outcoming.gui.progress.LoadFileProgressBar;
 import by.gomelagro.outcoming.properties.ApplicationProperties;
 import by.gomelagro.outcoming.service.EVatServiceSingleton;
 import by.gomelagro.outcoming.service.certificate.Certificate;
+import by.gomelagro.outcoming.status.Status;
 
 public class MainFrame extends JFrame{
 
@@ -74,7 +78,7 @@ public class MainFrame extends JFrame{
 	
 	private MonthPanelListModel model;
 	
-	private final String title = "Приложение для обработки исходящих ЭСЧФ v0.3.6.0";
+	private final String title = "Приложение для обработки исходящих ЭСЧФ v0.3.7.0 b4";
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -118,6 +122,7 @@ public class MainFrame extends JFrame{
 	private void initialize() {	
 		try {
 			ConnectionDB.getInstance().load();
+			//TableControl.runControl();
 		} catch (ClassNotFoundException | SQLException e) {
 			JOptionPane.showMessageDialog(null,e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 		}
@@ -413,7 +418,7 @@ public class MainFrame extends JFrame{
 				}
 			}
 		});
-		loadFolderMenuItem.setEnabled(false);
+		//loadFolderMenuItem.setEnabled(false);
 		listMenu.add(loadFolderMenuItem);
 		
 		listMenu.addSeparator();
@@ -607,33 +612,81 @@ public class MainFrame extends JFrame{
 						int avialCount = 0;
 						int errorCount = 0;
 						int notavialCount = 0;
-						int updateCount = 0;;
+						int updateCount = 0;
+						int missCount = 0;
 						LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
 						//проверка наличия УНП в сертификате
-						String unp = "";
-						if(Certificate.getInstance().getUnp2() == ""){//если unp2 пустой
-							if(Certificate.getInstance().getUnp101() == ""){//если unp101 пустой
-								progress.disactivated();
-								JOptionPane.showMessageDialog(null, "Не обнаружен УНП. Загрузка отменена","Ошибка",JOptionPane.ERROR_MESSAGE);
-							}else{
-								unp = Certificate.getInstance().getUnp101();
-							}
-						}else{
-							unp = Certificate.getInstance().getUnp2();
-						}
-						int limit = 30;
-						try{
+						String unp = Certificate.getInstance().getUnp();
+						int limit = 40;
+						//try{
 							for(int index=0; index<lines.size();index++){
 								String[] fields = lines.get(index).split(";",limit);								
 								if(fields[6].trim().equals(unp)){//изменить на чтение сертификата
 								//if(fields[6].trim().equals("400047886")){
-									System.out.println("Запись "+index+1+": Попытка чтения записи входящей ЭСЧФ из файла");
+									System.out.println("Запись "+String.valueOf(index+1)+": Попытка чтения записи входящей ЭСЧФ из файла");
 								}else{
-									switch(WorkingOutcomingTable.Count.getCountRecord(fields[8])){
-									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[12]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
-									case  0: if(WorkingOutcomingTable.Insert.insertIncoming(fields)) {notavialCount++;}else{errorCount++;} break;
-									case  1: if(WorkingOutcomingTable.Update.updateStatusFromFile(fields[14], fields[12])){updateCount++;}else{errorCount++;} break;
-									default: avialCount++; break;
+									System.out.println(fields[13]);
+									switch(WorkingOutcomingTable.Count.getCountRecord(fields[13])){
+										case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+fields[13]+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
+										case  0: {
+											Invoice invoice = LoadInvoice.loadPortal(fields[13]);
+											if(invoice != null){
+												int id = WorkingOutcomingTable.Insert.insertOutcomingFile(invoice);
+												if(id > 0){
+													if(WorkingOutcomingTable.Insert.insertOutcomingDocumentsFile(id, invoice)){
+														AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(fields[13]);
+														boolean isValid = status.verify();
+														if(isValid){
+															if(WorkingOutcomingTable.Field.getOutcomingStatus(String.valueOf(id)).trim() != status.getStatus()){
+																if(WorkingOutcomingTable.Insert.insertOutcomingStatusesFile(String.valueOf(id), status.getStatus(), Status.valueEnOf(status.getStatus()))){
+																	updateCount++;
+																}else{
+																	errorCount++;
+																}
+															}else{
+																missCount++;
+															}
+														}else{
+															errorCount++;
+														}
+														
+													}else{
+														errorCount++;
+													}
+												}else{
+													errorCount++;
+												}
+											}else{
+												System.err.println("ЭСЧФ "+fields[13]+": ошибка загрузки с портала");
+												errorCount++;
+											}
+											break;
+										}
+										case  1: {
+											int id = WorkingOutcomingTable.Field.getOutcomingId(fields[13]);
+											if(id > 0){
+												AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(fields[13]);
+												boolean isValid = status.verify();
+												if(isValid){
+													if(!WorkingOutcomingTable.Field.getOutcomingStatus(String.valueOf(id)).equals(status.getStatus())){
+														if(WorkingOutcomingTable.Insert.insertOutcomingStatusesFile(String.valueOf(id), status.getStatus(), Status.valueEnOf(status.getStatus()))){
+															updateCount++;
+														}else{
+															errorCount++;
+														}
+													}else{
+														missCount++;
+													}
+												}else{
+													errorCount++;
+												}
+												
+											}else{
+												errorCount++;
+											}
+											break;
+										}
+										default: avialCount++; break;
 									}
 									progress.setProgress(index+1);		
 									if(progress.isCancelled()){
@@ -642,13 +695,14 @@ public class MainFrame extends JFrame{
 									}
 								}
 							}
-						} catch (SQLException | ParseException e) {
+						/*} catch (SQLException | ParseException e) {
 							JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Загрузка файла прервана","Ошибка",JOptionPane.ERROR_MESSAGE);
 							progress.disactivated();
-						}
+						}*/
 						JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
 								"Не добавлено из-за их дублирования "+avialCount+" ЭСЧФ"+System.lineSeparator()+
 								"Обновлены статусы из файла у " + updateCount + " ЭСЧФ"+System.lineSeparator()+
+								"Пропущено обновление статусов у " + missCount + " ЭСЧФ" + System.lineSeparator() + 
 								"Не добавлено из-за ошибок "+errorCount+" ЭСЧФ","Информация",JOptionPane.INFORMATION_MESSAGE);
 						progress.disactivated();
 					}else{

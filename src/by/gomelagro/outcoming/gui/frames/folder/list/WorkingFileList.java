@@ -11,6 +11,9 @@ import by.gomelagro.outcoming.gui.frames.folder.component.FileCheckBoxFont;
 import by.gomelagro.outcoming.gui.frames.folder.component.JFileCheckBox;
 import by.gomelagro.outcoming.gui.frames.folder.extractor.NumberInvoiceExtractor;
 import by.gomelagro.outcoming.gui.frames.folder.validator.FileNameInvoiceValidator;
+import by.gomelagro.outcoming.gui.frames.invoice.Invoice;
+import by.gomelagro.outcoming.gui.frames.invoice.LoadInvoice;
+import by.gomelagro.outcoming.gui.frames.invoice.SmallTestInvoice;
 
 public class WorkingFileList {
 
@@ -23,21 +26,38 @@ public class WorkingFileList {
 		Color foreColor = Color.BLACK;
 		Color backColor = Color.WHITE;
 		File[] fList = new File(path).listFiles();
+		String errorLine = "";
 		for(int index=0;index<fList.length;index++){
 			if(fList[index].isFile()){
-				if(FileNameInvoiceValidator.validate(fList[index].getName())){
-					try {
-						if(!WorkingOutcomingTable.Count.isNumberInvoice(NumberInvoiceExtractor.getNumberInvoice(fList[index].getName()))){
-							foreColor = FileCheckBoxFont.getGreenFore();
-							backColor = FileCheckBoxFont.getGreenBack();
-							block = false;
-						}else{
-							foreColor = FileCheckBoxFont.getRedFore();
-							backColor = FileCheckBoxFont.getRedBack();
+				if((FileNameInvoiceValidator.validate(fList[index].getName()))){
+					Invoice invoice = LoadInvoice.loadFile(fList[index].getAbsolutePath());
+					if(invoice != null){
+						try {
+							if(!WorkingOutcomingTable.Count.isNumberInvoice(NumberInvoiceExtractor.getNumberInvoice(fList[index].getName()))){
+								SmallTestInvoice test = new SmallTestInvoice(invoice).test();
+								if(!test.getResult()){
+									errorLine = test.getErrorLine();
+									foreColor = FileCheckBoxFont.getOrangeFore();
+									backColor = FileCheckBoxFont.getOrangeBack();
+									block = false;
+								}else{
+									foreColor = FileCheckBoxFont.getGreenFore();
+									backColor = FileCheckBoxFont.getGreenBack();
+									block = false;
+								}
+								
+							}else{
+								foreColor = FileCheckBoxFont.getRedFore();
+								backColor = FileCheckBoxFont.getRedBack();
+								block = true;
+							}
+						} catch (SQLException e) {
+							System.err.println(fList[index].getName()+": "+e.getLocalizedMessage());
 							block = true;
 						}
-					} catch (SQLException e) {
-						System.err.println(fList[index].getName()+": "+e.getLocalizedMessage());
+					}else{
+						foreColor = FileCheckBoxFont.getBlackFore();
+						backColor = FileCheckBoxFont.getBlackBack();
 						block = true;
 					}
 				}else{
@@ -45,13 +65,15 @@ public class WorkingFileList {
 					backColor = FileCheckBoxFont.getBlackBack();
 					block = true;
 				}
-				list.add(new JFileCheckBox.Builder()
+				JFileCheckBox checkBox = new JFileCheckBox.Builder()
 						.setValue(fList[index].getName())
+						.setValueFull(path+"/"+fList[index].getName())
 						.setChecked(false)
 						.setBlocked(block)
 						.setForeColor(foreColor)
 						.setBackColor(backColor)
-						.build());
+						.build().setToolTip(errorLine);
+				list.add(checkBox);
 			}
 		}
 		return list;
@@ -76,6 +98,7 @@ public class WorkingFileList {
 							block = false;
 							list.add(new JFileCheckBox.Builder()
 									.setValue(fList[index].getName())
+									.setValueFull(path+"/"+fList[index].getName())
 									.setChecked(false)
 									.setBlocked(block)
 									.setForeColor(foreColor)
