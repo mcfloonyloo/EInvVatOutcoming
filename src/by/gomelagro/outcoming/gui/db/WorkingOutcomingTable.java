@@ -634,7 +634,6 @@ public class WorkingOutcomingTable {
 			}catch(SQLException e){
 				isAdd = false;
 			}
-			
 			if(isAdd){
 				String sqlId = "select last_insert_rowid()";
 				try(PreparedStatement statementID = ConnectionDB.getInstance().getConnection().prepareStatement(sqlId)){
