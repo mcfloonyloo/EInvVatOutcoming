@@ -13,6 +13,7 @@ public class FileNameInvoiceValidator {
 			"([0-9]{4})-"+
 			"([0-9]{10})\\."+
 			"(\\w*)$";
+			
 
 	public static boolean validate(final String name){
 		pattern = Pattern.compile(FILENAME_INVOICE_PATTERN);

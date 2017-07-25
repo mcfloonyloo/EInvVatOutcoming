@@ -14,18 +14,130 @@ import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.JOptionPane;
-
+import by.gomelagro.outcoming.base.ApplicationConstants;
 import by.gomelagro.outcoming.format.date.InvoiceDateFormat;
 import by.gomelagro.outcoming.gui.db.files.data.UnloadedInvoice;
 import by.gomelagro.outcoming.gui.db.number.NumberInvoice;
+import by.gomelagro.outcoming.gui.frames.count.ILoadCount;
+import by.gomelagro.outcoming.gui.frames.count.ISendCount;
 import by.gomelagro.outcoming.gui.frames.invoice.Invoice;
 import by.gomelagro.outcoming.gui.frames.invoice.data.list.BooleanList;
+import by.gomelagro.outcoming.gui.frames.invoice.data.list.StringList;
 import by.gomelagro.outcoming.gui.frames.invoice.verification.Verification;
 import by.gomelagro.outcoming.gui.frames.list.MonthYearItem;
 import by.gomelagro.outcoming.gui.frames.report.component.ResultFont;
 import by.gomelagro.outcoming.status.Status;
 
 public class WorkingOutcomingTable {
+	
+	public static class Statistics{
+		public static boolean insertStatisticLoad(ILoadCount insert, ILoadCount update){
+			String sql = "INSERT INTO "+ApplicationConstants.DB_TABLENAME+"_LOADED("
+					+ "DATE, " 			// 01
+					+ "BASEINSERT, " 	// 02
+					+ "MISSINSERT, " 	// 03
+					+ "ERRORINSERT, "	// 04
+					+ "BASEUPDATE, "	// 05
+					+ "MISSUPDATE, "	// 06
+					+ "ERRORUPDATE "	// 07
+					+ ") " 		
+					+ " VALUES (?,?,?,?,?,?,?)";
+			boolean result = false;
+			try (PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+				statement.setString(1, new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date()));
+				statement.setString(2, String.valueOf(insert.getBaseCount()));
+				statement.setString(3, String.valueOf(insert.getMissCount()));
+				statement.setString(4, String.valueOf(insert.getErrorCount()));
+				statement.setString(5, String.valueOf(update.getBaseCount()));
+				statement.setString(6, String.valueOf(update.getMissCount()));
+				statement.setString(7, String.valueOf(update.getErrorCount()));
+				statement.executeUpdate();
+				result = true;
+			} catch (SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return result;	
+		}
+
+		public static StringList getStatisticLoad(int count) throws SQLException{
+			StringList list = new StringList();
+			if(count > 0){
+				String sql = "SELECT * FROM "+ApplicationConstants.DB_TABLENAME+"_LOADED ORDER BY ID DESC LIMIT "+count;
+				Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+				ResultSet set = statement.executeQuery(sql);
+				while(set.next()){
+					list.add(
+							"#"+set.getString("ID")+" "+set.getString("DATE")+
+							": добавлено - "+set.getString("BASEINSERT")+
+							" ЭСЧФ, пропущено - "+set.getString("MISSINSERT")+
+							" ЭСЧФ, ошибок - "+set.getString("ERRORINSERT")+
+							
+							"ЭСЧФ; обновлено - "+set.getString("BASEUPDATE")+
+							" ЭСЧФ, пропущено - "+set.getString("MISSUPDATE")+
+							" ЭСЧФ, ошибок - "+set.getString("ERRORUPDATE")+" ЭСЧФ;"
+							);
+				}
+			}else{
+				list.clear();
+			}
+			return list;
+		}
+		
+		public static boolean insertStatisticSend(ISendCount insert, ILoadCount update){
+			String sql = "INSERT INTO "+ApplicationConstants.DB_TABLENAME+"_SENDED("
+					+ "DATE, " 			// 01
+					+ "VALIDINSERT, " 	// 02
+					+ "ACCEPTINSERT, " 	// 03
+					+ "ERRORINSERT, "	// 04
+					+ "INVALIDINSERT"	// 05
+					+ "BASEUPDATE, "	// 06
+					+ "MISSUPDATE, "	// 07
+					+ "ERRORUPDATE "	// 08
+					+ ") " 		
+					+ " VALUES (?,?,?,?,?,?,?,?)";
+			boolean result = false;
+			try (PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+				statement.setString(1, new SimpleDateFormat("dd.MM.yyyy HH:mm").format(new Date()));
+				statement.setString(2, String.valueOf(insert.getValidCount()));
+				statement.setString(3, String.valueOf(insert.getAcceptCount()));
+				statement.setString(4, String.valueOf(insert.getErrorCount()));
+				statement.setString(4, String.valueOf(insert.getInValidCount()));
+				statement.setString(6, String.valueOf(update.getBaseCount()));
+				statement.setString(7, String.valueOf(update.getMissCount()));
+				statement.setString(8, String.valueOf(update.getErrorCount()));
+				statement.executeUpdate();
+				result = true;
+			} catch (SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return result;
+		}
+		
+		public static StringList getStatisticSend(int count) throws SQLException{
+			StringList list = new StringList();
+			if(count > 0){
+				String sql = "SELECT * FROM "+ApplicationConstants.DB_TABLENAME+"_SENDED ORDER BY ID DESC LIMIT "+count;
+				Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+				ResultSet set = statement.executeQuery(sql);
+				while(set.next()){
+					list.add(
+							"#"+set.getString("ID")+" "+set.getString("DATE")+
+							": добавлено - "+set.getString("VALIDINSERT")+
+							" ЭСЧФ, пропущено - "+set.getString("ACCEPTINSERT")+
+							" ЭСЧФ, ошибок - "+set.getString("ERRORINSERT")+
+							" ЭСЧФ, некорректных - "+set.getString("INVALIDINSERT")+
+							
+							"ЭСЧФ; обновлено - "+set.getString("UPDATE")+
+							" ЭСЧФ, пропущено - "+set.getString("MISSUPDATE")+
+							" ЭСЧФ, ошибок - "+set.getString("ERRORUPDATE")+" ЭСЧФ;"
+							);
+				}
+			}else{
+				list.clear();
+			}
+			return list;
+		}
+	}
 	
 	public static class Count{
 		
@@ -42,15 +154,15 @@ public class WorkingOutcomingTable {
 		}
 		
 		//наличие ID статуса ЭСЧФ в базе данных
-		public static boolean isOutcomingStatusId(String id) throws SQLException{
-			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING_STATUSES WHERE ID = "+id;
+		public static boolean isStatusOutcomingId(String outcomingId) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM OUTCOMING_STATUSES WHERE OUTCOMINGID = "+outcomingId;
 			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
 			ResultSet set = statement.executeQuery(sql);
 			int count = -1;
 			while(set.next()){
 				count = set.getInt("COUNT");
 			}
-			if(count == 1){return true;}else{return false;}
+			if(count > 0){return true;}else{return false;}
 		}
 		
 		//количество всех ЭСЧФ в таблице
@@ -251,8 +363,54 @@ public class WorkingOutcomingTable {
 				return -1;
 			}
 		}	
-		//
 		
+		//наличие единицы измерения в базе данных
+		public static boolean isUnit(String unitNumber) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM UNIT WHERE CODE = '"+unitNumber+"'";
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}
+		
+		//наличие кода страны в базе данных
+		public static boolean isCountryCode(String countryCode) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM COUNTRY WHERE CODE = '"+countryCode+"'";
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}		
+		
+		//наличие кода страны в базе данных
+		public static boolean isBranch(String branchCode) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM BRANCH WHERE CODE = '"+branchCode+"'";
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}
+		
+		//наличие кода страны в базе данных
+		public static boolean isTypeDocument(String typeDocument) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM TYPEDOCUMENT WHERE CODE = '"+typeDocument+"'";
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}
 	}
 	
 	public static class Field{
@@ -260,27 +418,31 @@ public class WorkingOutcomingTable {
 		public static String getOutcomingStatus(String outcomingId){
 			String status = "";
 			try {
-				if(WorkingOutcomingTable.Count.isOutcomingStatusId(outcomingId)){
+				if(WorkingOutcomingTable.Count.isStatusOutcomingId(outcomingId)){
 					String sql = "SELECT MAX(ID) AS 'MAX', STATUSINVOICEEN FROM OUTCOMING_STATUSES WHERE OUTCOMINGID = "+outcomingId;
 					try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 						ResultSet set = statement.executeQuery();
 						if(set != null){
 							while(set.next()){
-								status = set.getString(2).trim();
+								status = set.getString("STATUSINVOICEEN").trim();
 							}
 						}
 					} catch (SQLException e) {
 						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+						System.err.println("Ошибка обработки SQL");
+						status = "";
 					}
 				}
 			} catch (HeadlessException | SQLException e) {
 				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+				System.err.println("Ошибка обработки");
+				status = "";
 			}
 			return status;
 		}
 		
 		public static int getOutcomingId(String number){
-			String sql = "SELECT ID FROM OUTCOMING WHERE NUMBERINVOICE = "+number;
+			String sql = "SELECT ID FROM OUTCOMING WHERE NUMBERINVOICE = '"+number+"'";
 			int id = -1; 
 			try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
 				ResultSet set = statement.executeQuery();
@@ -294,6 +456,129 @@ public class WorkingOutcomingTable {
 	}
 	
 	public static class Insert{
+		
+		public static boolean insertOutcoming(String[] fields) throws SQLException, ParseException{
+			BooleanList list = new BooleanList();
+			
+			boolean isAdd = false;
+			isAdd = insertOutcomingBase(fields);
+			int id = -1;
+			id = lastInsertRowId(isAdd);
+			if(id == -1){
+				list.add(false);
+			}else{
+				list.add(true);
+				
+				list.add(insertOutcomingStatuses(id, fields));
+				list.add(insertOutcomingDocuments(id, fields));
+			}
+						
+			return list.getResult();
+		}
+				
+		private static int lastInsertRowId(boolean isAdd){
+			if(isAdd){
+				String sqlId = "select last_insert_rowid()";
+				try(PreparedStatement statementID = ConnectionDB.getInstance().getConnection().prepareStatement(sqlId)){
+					int count = -1;
+					ResultSet set = statementID.executeQuery();
+					while(set.next()){
+						count = set.getInt(1);
+					}
+					return count;
+				} catch (SQLException e) {
+					JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					return -1;
+				}	
+			}else{
+				return -1;
+			}
+		}
+		
+		private static boolean insertOutcomingBase(String[] fields) throws SQLException, ParseException{
+			String sql = "INSERT INTO "+ApplicationConstants.DB_TABLENAME+"("
+					+ "UNP, " 				// 01	08
+					+ "CODECOUNTRY, " 		// 02	07
+					+ "NAME, " 				// 03	10
+					+ "NUMBERINVOICE, " 	// 04	13
+					+ "TYPEINVOICE, " 		// 05	15
+					+ "DATEISSUE, " 		// 06	17
+					+ "DATETRANSACTION, " 	// 07	18
+					+ "BYINVOICE, " 		// 08	14
+					+ "TOTALEXCISE, " 		// 09	39
+					+ "TOTALVAT, " 			// 10	40
+					+ "TOTALALL, " 			// 11	41
+					+ "TOTALCOST)" 			// 12	37
+					+ " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)";
+			boolean result = false;
+				PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
+				statement.setString(1,  fields[DatabaseFieldConstants.Invoice.UNP]);
+				statement.setString(2,  fields[DatabaseFieldConstants.Invoice.CODECOUNTRY]);
+				statement.setString(3,  fields[DatabaseFieldConstants.Invoice.NAME]);
+				statement.setString(4,  fields[DatabaseFieldConstants.Invoice.NUMBERINVOICE]);
+				statement.setString(5,  fields[DatabaseFieldConstants.Invoice.TYPEINVOICE]);
+				if(fields[DatabaseFieldConstants.Invoice.DATEISSUE].trim().length() > 0){
+					statement.setString(6,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[DatabaseFieldConstants.Invoice.DATEISSUE])));
+				}else{
+					statement.setString(6,  fields[DatabaseFieldConstants.Invoice.DATEISSUE]);
+				}
+				if(fields[DatabaseFieldConstants.Invoice.DATETRANSACTION].trim().length() > 0){
+					statement.setString(7,  InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(fields[DatabaseFieldConstants.Invoice.DATETRANSACTION])));
+				}else{
+					statement.setString(7,  fields[DatabaseFieldConstants.Invoice.DATETRANSACTION]);
+				}
+				statement.setString(8, fields[DatabaseFieldConstants.Invoice.BYINVOICE]);
+				statement.setString(9, fields[DatabaseFieldConstants.Invoice.TOTALEXCISE].replace(",", "."));
+				statement.setString(10, fields[DatabaseFieldConstants.Invoice.TOTALVAT].replace(",", "."));
+				statement.setString(11, fields[DatabaseFieldConstants.Invoice.TOTALALL].replace(",", "."));
+				statement.setString(12, fields[DatabaseFieldConstants.Invoice.TOTALCOST].replace(",", "."));
+				statement.executeUpdate();
+				result = true;
+				return result;		
+		}
+		
+		private static boolean insertOutcomingStatuses(int id, String[] fields) throws SQLException, ParseException{
+			String sql = "INSERT INTO "+ApplicationConstants.DB_TABLENAME+"_STATUSES ("
+					+ "OUTCOMINGID, "		// 01 	
+					+ "STATUSINVOICERU, " 	// 02	16
+					+ "STATUSINVOICEEN)" 	// 03
+					+ " VALUES (?,?,?)";
+			boolean result = false;
+				PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
+				statement.setString(1,  String.valueOf(id));
+				statement.setString(2,  fields[DatabaseFieldConstants.Status.STATUSINVOICERU]);
+				statement.setString(3, Status.valueRuOf(fields[DatabaseFieldConstants.Status.STATUSINVOICERU]));
+				statement.executeUpdate();
+				result = true;
+				return result;		
+		}
+
+		private static boolean insertOutcomingDocuments(int id, String[] fields) throws SQLException, ParseException{
+			String sql = "INSERT INTO "+ApplicationConstants.DB_TABLENAME+"_DOCUMENTS ("
+					+ "OUTCOMINGID, " 		// 01 
+					+ "CODEDOCUMENT, "		// 02
+					+ "DATEDOCUMENT, "		// 03	37
+					+ "BLANKCODEDOCUMENT, "	// 04	34
+					+ "SERIADOCUMENT, "		// 05	35
+					+ "NUMBERDOCUMENT)" 	// 06	36
+					+ " VALUES (?,?,?,?,?,?)";
+			boolean result = false;
+				PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
+				statement.setString(1,  String.valueOf(id));
+				statement.setString(2,  "");
+				if(fields[DatabaseFieldConstants.Document.DATEDOCUMENT].trim().length() > 0){
+					statement.setString(3, fields[DatabaseFieldConstants.Document.DATEDOCUMENT]);
+				}else{
+					statement.setString(3,  fields[DatabaseFieldConstants.Document.DATEDOCUMENT]);
+				}
+				statement.setString(4,  fields[DatabaseFieldConstants.Document.BLANKCODEDOCUMENT]);
+				statement.setString(5,  fields[DatabaseFieldConstants.Document.SERIADOCUMENT]);
+				statement.setString(6,  fields[DatabaseFieldConstants.Document.NUMBERDOCUMENT]);
+				
+				statement.executeUpdate();
+				result = true;
+				return result;		
+		}
 		
 		//добавление ЭСЧФ
 		public static int insertOutcomingFile(Invoice invoice){
@@ -417,7 +702,6 @@ public class WorkingOutcomingTable {
 						
 						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate().trim())){
 							if(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate().trim().length() > 0){
-								//statement.setString(3, InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate().trim())));
 								statement.setString(3, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate());
 							}else{
 								statement.setString(3, "");
@@ -502,8 +786,9 @@ public class WorkingOutcomingTable {
 		//список ЭСЧФ для отчета
 		public static List<UnloadedInvoice> selectSignedNumbersInvoice(){
 			List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-			String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, MIN(OUTCOMING_DOCUMENTS.DATEDOCUMENT) AS 'MIN' "+
-						"FROM (OUTCOMING INNER JOIN OUTCOMING_STATUSES ON OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID) LEFT JOIN OUTCOMING_DOCUMENTS ON OUTCOMING_DOCUMENTS.OUTCOMINGID = OUTCOMING.ID "+
+			//String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, MIN(OUTCOMING_DOCUMENTS.DATEDOCUMENT) AS 'MIN' "+
+			String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.ID, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, OUTCOMING_DOCUMENTS.DATEDOCUMENT "+
+						"FROM (OUTCOMING INNER JOIN OUTCOMING_STATUSES ON (OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID)) INNER JOIN OUTCOMING_DOCUMENTS ON OUTCOMING.ID = OUTCOMING_DOCUMENTS.OUTCOMINGID "+
 						"GROUP BY OUTCOMING.NUMBERINVOICE "+
 						"HAVING OUTCOMING_STATUSES.STATUSINVOICEEN IS NOT NULL ";
 			try(Statement statement = ConnectionDB.getInstance().getConnection().createStatement()){
@@ -541,8 +826,8 @@ public class WorkingOutcomingTable {
 		//список ЭСЧФ для отчета на дату
 		public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtDate(java.util.Date date, Comparator<UnloadedInvoice> comparator, String status){
 			List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-			String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, MIN(OUTCOMING_DOCUMENTS.DATEDOCUMENT) AS 'MIN' "+
-						"FROM (OUTCOMING INNER JOIN OUTCOMING_STATUSES ON OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID) LEFT JOIN OUTCOMING_DOCUMENTS ON OUTCOMING_DOCUMENTS.OUTCOMINGID = OUTCOMING.ID "+
+			String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.ID, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, OUTCOMING_DOCUMENTS.DATEDOCUMENT "+
+						"FROM (OUTCOMING INNER JOIN OUTCOMING_STATUSES ON (OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID)) INNER JOIN OUTCOMING_DOCUMENTS ON OUTCOMING.ID = OUTCOMING_DOCUMENTS.OUTCOMINGID "+
 						"GROUP BY OUTCOMING.NUMBERINVOICE "+
 						"HAVING OUTCOMING_STATUSES.STATUSINVOICEEN IS NOT NULL "+
 						"AND OUTCOMING.DATETRANSACTION = '"+date.toString()+"' "+status+" ORDER BY strftime('%Y',OUTCOMING.DATETRANSACTION), DATE(OUTCOMING.DATETRANSACTION)";
@@ -564,12 +849,19 @@ public class WorkingOutcomingTable {
 						color = ResultFont.getRed();
 					}
 					java.util.Date dateDocument = null;
-					if(set.getString("MIN") != null){
-						dateDocument = new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("MIN").trim())));
+					java.util.Date dateTransaction = null;
+					System.out.print("{ЭСЧФ "+set.getString("NUMBERINVOICE")+ " DATETRANSACTION="+set.getString("DATETRANSACTION")+" DATEDOCUMENT="+set.getString("DATEDOCUMENT"));
+					if(set.getString("DATETRANSACTION").trim().length() > 0){
+						dateTransaction = new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATETRANSACTION").trim())));
 					}
+						
+					if(set.getString("DATEDOCUMENT").trim().length() > 0){
+						dateDocument = new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATEDOCUMENT").trim())));
+					}
+					System.out.println(" }");
 					list.add(new UnloadedInvoice.Builder()
 							.setUnp(set.getString("UNP").trim())
-							.setDateTransaction(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATETRANSACTION").trim()))))
+							.setDateTransaction(dateTransaction)
 							.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 							.setStatusInvoiceRu(statusRu)
 							.setTotalCost(set.getString("TOTALCOST").trim())
@@ -590,8 +882,8 @@ public class WorkingOutcomingTable {
 		//список ЭСЧФ для отчета на период
 		public static List<UnloadedInvoice> selectSignedNumbersInvoiceAtBetween(java.util.Date leftDate, java.util.Date date, Comparator<UnloadedInvoice> comparator, String status){
 			List<UnloadedInvoice> list = new ArrayList<UnloadedInvoice>();
-			String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, MIN(OUTCOMING_DOCUMENTS.DATEDOCUMENT) AS 'MIN' "+
-						"FROM (OUTCOMING INNER JOIN OUTCOMING_STATUSES ON OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID) LEFT JOIN OUTCOMING_DOCUMENTS ON OUTCOMING_DOCUMENTS.OUTCOMINGID = OUTCOMING.ID "+
+			String sql ="SELECT OUTCOMING.ID, OUTCOMING.UNP, OUTCOMING.DATETRANSACTION, OUTCOMING.NUMBERINVOICE, OUTCOMING_STATUSES.ID, OUTCOMING_STATUSES.STATUSINVOICEEN, OUTCOMING.TOTALCOST, OUTCOMING.TOTALVAT, OUTCOMING.TOTALALL, OUTCOMING_DOCUMENTS.DATEDOCUMENT "+
+						"FROM (OUTCOMING INNER JOIN OUTCOMING_STATUSES ON (OUTCOMING.ID = OUTCOMING_STATUSES.OUTCOMINGID)) INNER JOIN OUTCOMING_DOCUMENTS ON OUTCOMING.ID = OUTCOMING_DOCUMENTS.OUTCOMINGID "+
 						"GROUP BY OUTCOMING.NUMBERINVOICE "+
 						"HAVING OUTCOMING_STATUSES.STATUSINVOICEEN IS NOT NULL "+ 
 						"AND OUTCOMING.DATETRANSACTION BETWEEN '"+leftDate.toString()+"' AND '"+date.toString()+"' "+status;
@@ -613,12 +905,19 @@ public class WorkingOutcomingTable {
 						color = ResultFont.getRed();
 					}
 					java.util.Date dateDocument = null;
-					if(set.getString("MIN") != null){
-						dateDocument = new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("MIN").trim())));
+					java.util.Date dateTransaction = null;
+					//System.out.print("{ЭСЧФ "+set.getString("NUMBERINVOICE")+ " DATETRANSACTION="+set.getString("DATETRANSACTION")+" DATEDOCUMENT="+set.getString("DATEDOCUMENT"));
+					if(set.getString("DATETRANSACTION").trim().length() > 0){
+						dateTransaction = new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATETRANSACTION").trim())));
 					}
+						
+					if(set.getString("DATEDOCUMENT").trim().length() > 0){
+						dateDocument = new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATEDOCUMENT").trim())));
+					}
+					//System.out.println(" }");
 					list.add(new UnloadedInvoice.Builder()
 							.setUnp(set.getString("UNP").trim())
-							.setDateTransaction(new SimpleDateFormat("dd.MM.yyyy").parse(InvoiceDateFormat.dateSmallDot2String(InvoiceDateFormat.string2DateReverseSmallDash(set.getString("DATETRANSACTION").trim()))))
+							.setDateTransaction(dateTransaction)
 							.setNumberInvoice(set.getString("NUMBERINVOICE").trim())
 							.setStatusInvoiceRu(statusRu)
 							.setTotalCost(set.getString("TOTALCOST").trim())
@@ -812,6 +1111,8 @@ public class WorkingOutcomingTable {
 					} catch (SQLException e) {
 						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 					}
+				}else{
+					country = "[ЗНАЧЕНИЕ НЕ ОБНАРУЖЕНО]";
 				}
 			} catch (HeadlessException | SQLException e) {
 				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
@@ -821,7 +1122,7 @@ public class WorkingOutcomingTable {
 		
 		//-Типы документов---------------------
 		
-		//наличие кода страны в базе данных
+		//наличие типа документов в базе данных
 		public static boolean isTypeDocumentCode(String code) throws SQLException{
 			String sql = "SELECT COUNT(*) AS COUNT FROM TYPEDOCUMENT WHERE CODE = '"+code+"'";
 			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
@@ -834,7 +1135,7 @@ public class WorkingOutcomingTable {
 		}
 
 		public static String getTypeDocumentName(String code){
-			String country = "";
+			String typeDocument = "";
 			try {
 				if(WorkingOutcomingTable.Additional.isTypeDocumentCode(code)){
 					String sql = "SELECT NAME FROM TYPEDOCUMENT WHERE CODE = '"+code+"'";
@@ -842,18 +1143,133 @@ public class WorkingOutcomingTable {
 						ResultSet set = statement.executeQuery();
 						if(set != null){
 							while(set.next()){
-								country = set.getString(1).trim();
+								typeDocument = set.getString(1).trim();
 							}
 						}
 					} catch (SQLException e) {
 						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 					}
+				}else{
+					typeDocument = "[ЗНАЧЕНИЕ НЕ ОБНАРУЖЕНО]";
 				}
 			} catch (HeadlessException | SQLException e) {
 				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
 			}
-			return country;
+			return typeDocument;
 		}
 		
+		//-Инспекции Министерства по налогам и сборам
+		
+		//наличие кода инспекции в базе данных
+		public static boolean isIMTDCode(String code) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM IMTD WHERE CODE = '"+code+"'";
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}
+
+		public static String getIMTDName(String code){
+			String imtdName = "";
+			try {
+				if(WorkingOutcomingTable.Additional.isIMTDCode(code)){
+					String sql = "SELECT SHORTNAME FROM IMTD WHERE CODE = '"+code+"'";
+					try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+						ResultSet set = statement.executeQuery();
+						if(set != null){
+							while(set.next()){
+								imtdName = set.getString(1).trim();
+							}
+						}
+					} catch (SQLException e) {
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}else{
+					imtdName = "[ЗНАЧЕНИЕ НЕ ОБНАРУЖЕНО]";
+				}
+			} catch (HeadlessException | SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return imtdName;
+		}
+		
+		//-Единицы измерения-------------------
+		
+		//наличие кода единицы измерения в базе данных
+		public static boolean isUnitCode(String code) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM UNIT WHERE CODE = '"+code+"'";
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}
+
+		public static String getUnitName(String code){
+			String unit = "";
+			try {
+				if(WorkingOutcomingTable.Additional.isUnitCode(code)){
+					String sql = "SELECT FULLNAME FROM UNIT WHERE CODE = '"+code+"'";
+					try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+						ResultSet set = statement.executeQuery();
+						if(set != null){
+							while(set.next()){
+								unit = set.getString(1).trim();
+							}
+						}
+					} catch (SQLException e) {
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}else{
+					unit = "[ЗНАЧЕНИЕ НЕ ОБНАРУЖЕНО]";
+				}
+			} catch (HeadlessException | SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return unit;
+		}
+		
+		//-Филиалы организаций-----------------
+		
+		//наличие кода филиала в базе данных
+		public static boolean isBranchCode(String code, String unp) throws SQLException{
+			String sql = "SELECT COUNT(*) AS COUNT FROM UNIT WHERE CODE = '"+code+"' AND UNP = '"+unp+"'";
+			Statement statement = ConnectionDB.getInstance().getConnection().createStatement();
+			ResultSet set = statement.executeQuery(sql);
+			int count = -1;
+			while(set.next()){
+				count = set.getInt("COUNT");
+			}
+			if(count == 1){return true;}else{return false;}
+		}
+
+		public static String getBranchName(String code, String unp){
+			String branchName = "";
+			try {
+				if(WorkingOutcomingTable.Additional.isBranchCode(code, unp)){
+					String sql = "SELECT SHORTNAME FROM UNIT WHERE CODE = '"+code+"' AND UNP = '"+unp+"'";
+					try(PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql)){
+						ResultSet set = statement.executeQuery();
+						if(set != null){
+							while(set.next()){
+								branchName = set.getString(1).trim();
+							}
+						}
+					} catch (SQLException e) {
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}else{
+					branchName = "[ЗНАЧЕНИЕ НЕ ОБНАРУЖЕНО]";
+				}
+			} catch (HeadlessException | SQLException e) {
+				JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+			}
+			return branchName;
+		}
 	}
 }

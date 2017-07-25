@@ -24,6 +24,10 @@ public class FileCheckBoxFont {
 		return new Color(0,150,0);
 	}
 	
+	public static Color getBlueFore(){
+		return new Color(0,50,200);
+	}
+	
 	public static Color getBlackFore(){
 		return new Color(0,0,0);
 	}
@@ -38,6 +42,10 @@ public class FileCheckBoxFont {
 	
 	public static Color getGreenBack(){
 		return new Color(180,230,180);
+	}
+	
+	public static Color getBlueBack(){
+		return new Color(180,200,255);
 	}
 	
 	public static Color getBlackBack(){

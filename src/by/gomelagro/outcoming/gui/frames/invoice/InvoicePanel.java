@@ -528,7 +528,7 @@ public class InvoicePanel {
 					.setContainsAnchor(GridBagConstraints.EAST);
 				providerPanel.add(labelR.getLabel(), labelR.getContains());
 					
-				ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getProvider().getBranchCode(), 4, gridy)
+				ComponentTextFieldPanel textField = new ComponentTextFieldPanel(WorkingOutcomingTable.Additional.getBranchName(invoice.getProvider().getBranchCode(), invoice.getProvider().getUnp()), 4, gridy)
 					.setContainsFill(GridBagConstraints.HORIZONTAL)
 					.setContainsInsets(new Insets(0,0,5,5))
 					.setTextFieldColumns(10);
@@ -1098,7 +1098,7 @@ public class InvoicePanel {
 						.setContainsInsets(new Insets(0,0,5,5));
 				recipientPanel.add(labelR.getLabel(), labelR.getContains());
 				
-				ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getRecipient().getBranchCode(), 4, gridy)
+				ComponentTextFieldPanel textField = new ComponentTextFieldPanel(WorkingOutcomingTable.Additional.getBranchName(invoice.getRecipient().getBranchCode(), invoice.getRecipient().getUnp()), 4, gridy)
 						.setContainsFill(GridBagConstraints.HORIZONTAL)
 						.setContainsInsets(new Insets(0,0,5,5))
 						.setTextFieldColumns(10);
@@ -1489,236 +1489,238 @@ public class InvoicePanel {
 		deliveryConditionPanel.setLayout(gbl_deliveryConditionPane);
 		
 		int gridy = 0;//0
-		if(Verification.verifySection(invoice.getDeliveryCondition().getContract())){
-			if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getNumber())){
-				gridy++;//1
-				ComponentLabelPanel label = new ComponentLabelPanel("Договор (контракт) на поставку товара", 1,gridy)
+		if(Verification.verifySection(invoice.getDeliveryCondition())){
+			if(Verification.verifySection(invoice.getDeliveryCondition().getContract())){
+				if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getNumber())){
+					gridy++;//1
+					ComponentLabelPanel label = new ComponentLabelPanel("Договор (контракт) на поставку товара", 1,gridy)
+							.setLabelFont(FONT)
+							.setContainsGridwidth(2)
+							.setContainsAnchor(GridBagConstraints.WEST)
+							.setContainsInsets(new Insets(0,0,5,5));
+					deliveryConditionPanel.add(label.getLabel(), label.getContains());
+					
+					ComponentLabelPanel labelR = new ComponentLabelPanel(" [contract - number] ", 3, gridy)
+							.setContainsAnchor(GridBagConstraints.EAST)
+							.setContainsInsets(new Insets(0,0,5,5));
+					deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
+					
+					ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getNumber(), 4, gridy)
+							.setContainsFill(GridBagConstraints.HORIZONTAL)
+							.setContainsInsets(new Insets(0,0,5,5))
+							.setTextFieldColumns(10);
+					deliveryConditionPanel.add(textField.getTextField(), textField.getContains());				
+				}
+				
+				if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDate())){
+					gridy++;//2
+					ComponentLabelPanel label = new ComponentLabelPanel("Дата договора (контракта)", 1,gridy)
+							.setContainsGridwidth(2)
+							.setLabelFont(FONT)
+							.setContainsAnchor(GridBagConstraints.WEST)
+							.setContainsInsets(new Insets(0,0,5,5));
+					deliveryConditionPanel.add(label.getLabel(), label.getContains());
+					
+					ComponentLabelPanel labelR = new ComponentLabelPanel(" [contract - date] ", 3, gridy)
+							.setContainsAnchor(GridBagConstraints.EAST)
+							.setContainsInsets(new Insets(0,0,5,5));
+					deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
+					
+					String date = "";
+					try{
+						date = new SimpleDateFormat("dd.MM.yyyy").format(InvoiceDateFormat.string2DateReverseSmallDash(invoice.getDeliveryCondition().getContract().getDate()));
+					}catch(ParseException e){
+						date = invoice.getDeliveryCondition().getContract().getDate();
+					}
+					
+					ComponentTextFieldPanel textField = new ComponentTextFieldPanel(date, 4, gridy)
+							.setContainsFill(GridBagConstraints.HORIZONTAL)
+							.setContainsInsets(new Insets(0,0,5,5))
+							.setTextFieldColumns(10);
+					deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
+				}
+				gridy++;//3
+				if(Verification.verifyList(invoice.getDeliveryCondition().getContract().getDocuments())){
+					gridy++;//4
+					ComponentLabelPanel labelTitle = new ComponentLabelPanel("ДОКУМЕНТЫ:", 1,gridy)
+							.setContainsGridwidth(2)
+							.setLabelFont(FONT)
+							.setContainsAnchor(GridBagConstraints.WEST)
+							.setContainsInsets(new Insets(0,0,5,5));
+					deliveryConditionPanel.add(labelTitle.getLabel(), labelTitle.getContains());
+					gridy++;//5
+					
+					for(int index = 0;index<invoice.getDeliveryCondition().getContract().getDocuments().size();index++){
+						if(Verification.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index))){
+							if(invoice.getDeliveryCondition().getContract().getDocuments().size() > 1){
+							gridy++;//6
+								ComponentLabelPanel labelNumber = new ComponentLabelPanel("Документ №"+String.valueOf(index+1), 1,gridy)
+										.setContainsGridwidth(2)
+										.setLabelFont(FONT)
+										.setContainsAnchor(GridBagConstraints.WEST)
+										.setContainsInsets(new Insets(0,0,5,5));
+								deliveryConditionPanel.add(labelNumber.getLabel(), labelNumber.getContains());
+								gridy++;//7
+							}
+	
+							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate())){
+								gridy++;//8
+								ComponentLabelPanel label = new ComponentLabelPanel("Дата", 2,gridy)
+										.setLabelFont(FONT)
+										.setContainsAnchor(GridBagConstraints.WEST)
+										.setContainsInsets(new Insets(0,0,5,5));
+								deliveryConditionPanel.add(label.getLabel(), label.getContains());
+								
+								ComponentLabelPanel labelR = new ComponentLabelPanel(" [date] ", 3, gridy)
+										.setContainsAnchor(GridBagConstraints.EAST)
+										.setContainsInsets(new Insets(0,0,5,5));
+								deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
+								
+								String date = "";
+								try{
+									date = new SimpleDateFormat("dd.MM.yyyy").format(InvoiceDateFormat.string2DateReverseSmallDash(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate()));
+								}catch(ParseException e){
+									date = invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate();
+								}
+								
+								ComponentTextFieldPanel textField = new ComponentTextFieldPanel(date, 4, gridy)
+										.setContainsFill(GridBagConstraints.HORIZONTAL)
+										.setContainsInsets(new Insets(0,0,5,5))
+										.setTextFieldColumns(10);
+								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
+							}
+	
+							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode())){
+								gridy++;//9
+								ComponentLabelPanel label = new ComponentLabelPanel("Код типа бланка", 2,gridy)
+										.setLabelFont(FONT)
+										.setContainsAnchor(GridBagConstraints.WEST)
+										.setContainsInsets(new Insets(0,0,5,5));
+								deliveryConditionPanel.add(label.getLabel(), label.getContains());
+								
+								ComponentLabelPanel labelR = new ComponentLabelPanel(" [blackCode] ", 3, gridy)
+										.setContainsAnchor(GridBagConstraints.EAST)
+										.setContainsInsets(new Insets(0,0,5,5));
+								deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
+								
+								ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode(), 4, gridy)
+										.setContainsFill(GridBagConstraints.HORIZONTAL)
+										.setContainsInsets(new Insets(0,0,5,5))
+										.setTextFieldColumns(10);
+								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
+							}
+							
+							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria())){
+								gridy++;//10
+								ComponentLabelPanel label = new ComponentLabelPanel("Серия", 2,gridy)
+										.setLabelFont(FONT)
+										.setContainsAnchor(GridBagConstraints.WEST)
+										.setContainsInsets(new Insets(0,0,5,5));
+								deliveryConditionPanel.add(label.getLabel(), label.getContains());
+								
+								ComponentLabelPanel labelR = new ComponentLabelPanel(" [seria] ", 3, gridy)
+										.setContainsAnchor(GridBagConstraints.EAST)
+										.setContainsInsets(new Insets(0,0,5,5));
+								deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
+								
+								ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria(), 4, gridy)
+										.setContainsFill(GridBagConstraints.HORIZONTAL)
+										.setContainsInsets(new Insets(0,0,5,5))
+										.setTextFieldColumns(10);
+								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
+							}
+							
+							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber())){
+								gridy++;//11
+								ComponentLabelPanel label = new ComponentLabelPanel("Номер", 2, gridy)
+										.setLabelFont(FONT)
+										.setContainsAnchor(GridBagConstraints.WEST)
+										.setContainsInsets(new Insets(0,0,5,5));
+								deliveryConditionPanel.add(label.getLabel(), label.getContains());
+								
+								ComponentLabelPanel labelR = new ComponentLabelPanel(" [number] ", 3, gridy)
+										.setContainsAnchor(GridBagConstraints.EAST)
+										.setContainsInsets(new Insets(0,0,5,5));
+								deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
+								
+								ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber(), 4, gridy)
+										.setContainsFill(GridBagConstraints.HORIZONTAL)
+										.setContainsInsets(new Insets(0,0,5,5))
+										.setTextFieldColumns(10);
+								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
+							}
+							
+							if(Verification.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType())){
+								if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode())){
+									gridy++;//12
+									ComponentLabelPanel label = new ComponentLabelPanel("Вид документа", 2,gridy)
+											.setLabelFont(FONT)
+											.setContainsAnchor(GridBagConstraints.WEST)
+											.setContainsInsets(new Insets(0,0,5,5));
+									deliveryConditionPanel.add(label.getLabel(), label.getContains());
+									
+									ComponentLabelPanel labelR = new ComponentLabelPanel(" [docType - code] ", 3, gridy)
+											.setContainsAnchor(GridBagConstraints.EAST)
+											.setContainsInsets(new Insets(0,0,5,5));
+									deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
+									
+									ComponentTextFieldPanel textField= new ComponentTextFieldPanel(WorkingOutcomingTable.Additional.getTypeDocumentName(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode()), 4, gridy)
+											.setContainsFill(GridBagConstraints.HORIZONTAL)
+											.setContainsInsets(new Insets(0,0,5,5))
+											.setTextFieldColumns(10);
+									deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
+								}
+								
+								if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getValue())){
+									gridy++;//13
+									ComponentLabelPanel label = new ComponentLabelPanel("Название", 2,gridy)
+											.setLabelFont(FONT)
+											.setContainsAnchor(GridBagConstraints.WEST)
+											.setContainsInsets(new Insets(0,0,5,5));
+									deliveryConditionPanel.add(label.getLabel(), label.getContains());
+									
+									ComponentLabelPanel labelR = new ComponentLabelPanel(" [docType - value] ", 3, gridy)
+											.setContainsAnchor(GridBagConstraints.EAST)
+											.setContainsInsets(new Insets(0,0,5,5));
+									deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
+									
+									ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getValue(), 4, gridy)
+											.setContainsFill(GridBagConstraints.HORIZONTAL)
+											.setContainsInsets(new Insets(0,0,5,5))
+											.setTextFieldColumns(10);
+									deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
+								}
+	
+							}
+							
+							gridy++;//14
+						}
+					}
+				}
+			}
+			
+			
+			if(Verification.verifyField(invoice.getDeliveryCondition().getDescription())){
+				gridy++;//15
+				ComponentLabelPanel label = new ComponentLabelPanel("Дополнительные сведения", 1,gridy)
+						.setContainsGridheight(2)
 						.setLabelFont(FONT)
-						.setContainsGridwidth(2)
 						.setContainsAnchor(GridBagConstraints.WEST)
 						.setContainsInsets(new Insets(0,0,5,5));
 				deliveryConditionPanel.add(label.getLabel(), label.getContains());
 				
-				ComponentLabelPanel labelR = new ComponentLabelPanel(" [contract - number] ", 3, gridy)
+				ComponentLabelPanel labelR = new ComponentLabelPanel(" [description] ", 3, gridy)
 						.setContainsAnchor(GridBagConstraints.EAST)
 						.setContainsInsets(new Insets(0,0,5,5));
 				deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
 				
-				ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getNumber(), 4, gridy)
+				ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getDescription(), 4, gridy)
 						.setContainsFill(GridBagConstraints.HORIZONTAL)
 						.setContainsInsets(new Insets(0,0,5,5))
 						.setTextFieldColumns(10);
 				deliveryConditionPanel.add(textField.getTextField(), textField.getContains());				
 			}
-			
-			if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDate())){
-				gridy++;//2
-				ComponentLabelPanel label = new ComponentLabelPanel("Дата договора (контракта)", 1,gridy)
-						.setContainsGridwidth(2)
-						.setLabelFont(FONT)
-						.setContainsAnchor(GridBagConstraints.WEST)
-						.setContainsInsets(new Insets(0,0,5,5));
-				deliveryConditionPanel.add(label.getLabel(), label.getContains());
-				
-				ComponentLabelPanel labelR = new ComponentLabelPanel(" [contract - date] ", 3, gridy)
-						.setContainsAnchor(GridBagConstraints.EAST)
-						.setContainsInsets(new Insets(0,0,5,5));
-				deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
-				
-				String date = "";
-				try{
-					date = new SimpleDateFormat("dd.MM.yyyy").format(InvoiceDateFormat.string2DateReverseSmallDash(invoice.getDeliveryCondition().getContract().getDate()));
-				}catch(ParseException e){
-					date = invoice.getDeliveryCondition().getContract().getDate();
-				}
-				
-				ComponentTextFieldPanel textField = new ComponentTextFieldPanel(date, 4, gridy)
-						.setContainsFill(GridBagConstraints.HORIZONTAL)
-						.setContainsInsets(new Insets(0,0,5,5))
-						.setTextFieldColumns(10);
-				deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
-			}
-			gridy++;//3
-			if(Verification.verifyList(invoice.getDeliveryCondition().getContract().getDocuments())){
-				gridy++;//4
-				ComponentLabelPanel labelTitle = new ComponentLabelPanel("ДОКУМЕНТЫ:", 1,gridy)
-						.setContainsGridwidth(2)
-						.setLabelFont(FONT)
-						.setContainsAnchor(GridBagConstraints.WEST)
-						.setContainsInsets(new Insets(0,0,5,5));
-				deliveryConditionPanel.add(labelTitle.getLabel(), labelTitle.getContains());
-				gridy++;//5
-				
-				for(int index = 0;index<invoice.getDeliveryCondition().getContract().getDocuments().size();index++){
-					if(Verification.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index))){
-						if(invoice.getDeliveryCondition().getContract().getDocuments().size() > 1){
-						gridy++;//6
-							ComponentLabelPanel labelNumber = new ComponentLabelPanel("Документ №"+String.valueOf(index+1), 1,gridy)
-									.setContainsGridwidth(2)
-									.setLabelFont(FONT)
-									.setContainsAnchor(GridBagConstraints.WEST)
-									.setContainsInsets(new Insets(0,0,5,5));
-							deliveryConditionPanel.add(labelNumber.getLabel(), labelNumber.getContains());
-							gridy++;//7
-						}
-
-						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate())){
-							gridy++;//8
-							ComponentLabelPanel label = new ComponentLabelPanel("Дата", 2,gridy)
-									.setLabelFont(FONT)
-									.setContainsAnchor(GridBagConstraints.WEST)
-									.setContainsInsets(new Insets(0,0,5,5));
-							deliveryConditionPanel.add(label.getLabel(), label.getContains());
-							
-							ComponentLabelPanel labelR = new ComponentLabelPanel(" [date] ", 3, gridy)
-									.setContainsAnchor(GridBagConstraints.EAST)
-									.setContainsInsets(new Insets(0,0,5,5));
-							deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
-							
-							String date = "";
-							try{
-								date = new SimpleDateFormat("dd.MM.yyyy").format(InvoiceDateFormat.string2DateReverseSmallDash(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate()));
-							}catch(ParseException e){
-								date = invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate();
-							}
-							
-							ComponentTextFieldPanel textField = new ComponentTextFieldPanel(date, 4, gridy)
-									.setContainsFill(GridBagConstraints.HORIZONTAL)
-									.setContainsInsets(new Insets(0,0,5,5))
-									.setTextFieldColumns(10);
-							deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
-						}
-
-						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode())){
-							gridy++;//9
-							ComponentLabelPanel label = new ComponentLabelPanel("Код типа бланка", 2,gridy)
-									.setLabelFont(FONT)
-									.setContainsAnchor(GridBagConstraints.WEST)
-									.setContainsInsets(new Insets(0,0,5,5));
-							deliveryConditionPanel.add(label.getLabel(), label.getContains());
-							
-							ComponentLabelPanel labelR = new ComponentLabelPanel(" [blackCode] ", 3, gridy)
-									.setContainsAnchor(GridBagConstraints.EAST)
-									.setContainsInsets(new Insets(0,0,5,5));
-							deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
-							
-							ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode(), 4, gridy)
-									.setContainsFill(GridBagConstraints.HORIZONTAL)
-									.setContainsInsets(new Insets(0,0,5,5))
-									.setTextFieldColumns(10);
-							deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
-						}
-						
-						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria())){
-							gridy++;//10
-							ComponentLabelPanel label = new ComponentLabelPanel("Серия", 2,gridy)
-									.setLabelFont(FONT)
-									.setContainsAnchor(GridBagConstraints.WEST)
-									.setContainsInsets(new Insets(0,0,5,5));
-							deliveryConditionPanel.add(label.getLabel(), label.getContains());
-							
-							ComponentLabelPanel labelR = new ComponentLabelPanel(" [seria] ", 3, gridy)
-									.setContainsAnchor(GridBagConstraints.EAST)
-									.setContainsInsets(new Insets(0,0,5,5));
-							deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
-							
-							ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria(), 4, gridy)
-									.setContainsFill(GridBagConstraints.HORIZONTAL)
-									.setContainsInsets(new Insets(0,0,5,5))
-									.setTextFieldColumns(10);
-							deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
-						}
-						
-						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber())){
-							gridy++;//11
-							ComponentLabelPanel label = new ComponentLabelPanel("Номер", 2, gridy)
-									.setLabelFont(FONT)
-									.setContainsAnchor(GridBagConstraints.WEST)
-									.setContainsInsets(new Insets(0,0,5,5));
-							deliveryConditionPanel.add(label.getLabel(), label.getContains());
-							
-							ComponentLabelPanel labelR = new ComponentLabelPanel(" [number] ", 3, gridy)
-									.setContainsAnchor(GridBagConstraints.EAST)
-									.setContainsInsets(new Insets(0,0,5,5));
-							deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
-							
-							ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber(), 4, gridy)
-									.setContainsFill(GridBagConstraints.HORIZONTAL)
-									.setContainsInsets(new Insets(0,0,5,5))
-									.setTextFieldColumns(10);
-							deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
-						}
-						
-						if(Verification.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType())){
-							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode())){
-								gridy++;//12
-								ComponentLabelPanel label = new ComponentLabelPanel("Вид документа", 2,gridy)
-										.setLabelFont(FONT)
-										.setContainsAnchor(GridBagConstraints.WEST)
-										.setContainsInsets(new Insets(0,0,5,5));
-								deliveryConditionPanel.add(label.getLabel(), label.getContains());
-								
-								ComponentLabelPanel labelR = new ComponentLabelPanel(" [docType - code] ", 3, gridy)
-										.setContainsAnchor(GridBagConstraints.EAST)
-										.setContainsInsets(new Insets(0,0,5,5));
-								deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
-								
-								ComponentTextFieldPanel textField= new ComponentTextFieldPanel(WorkingOutcomingTable.Additional.getTypeDocumentName(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode()), 4, gridy)
-										.setContainsFill(GridBagConstraints.HORIZONTAL)
-										.setContainsInsets(new Insets(0,0,5,5))
-										.setTextFieldColumns(10);
-								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
-							}
-							
-							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getValue())){
-								gridy++;//13
-								ComponentLabelPanel label = new ComponentLabelPanel("Название", 2,gridy)
-										.setLabelFont(FONT)
-										.setContainsAnchor(GridBagConstraints.WEST)
-										.setContainsInsets(new Insets(0,0,5,5));
-								deliveryConditionPanel.add(label.getLabel(), label.getContains());
-								
-								ComponentLabelPanel labelR = new ComponentLabelPanel(" [docType - value] ", 3, gridy)
-										.setContainsAnchor(GridBagConstraints.EAST)
-										.setContainsInsets(new Insets(0,0,5,5));
-								deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
-								
-								ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getValue(), 4, gridy)
-										.setContainsFill(GridBagConstraints.HORIZONTAL)
-										.setContainsInsets(new Insets(0,0,5,5))
-										.setTextFieldColumns(10);
-								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
-							}
-
-						}
-						
-						gridy++;//14
-					}
-				}
-			}
 		}
-		
-		if(Verification.verifyField(invoice.getDeliveryCondition().getDescription())){
-			gridy++;//15
-			ComponentLabelPanel label = new ComponentLabelPanel("Дополнительные сведения", 1,gridy)
-					.setContainsGridheight(2)
-					.setLabelFont(FONT)
-					.setContainsAnchor(GridBagConstraints.WEST)
-					.setContainsInsets(new Insets(0,0,5,5));
-			deliveryConditionPanel.add(label.getLabel(), label.getContains());
-			
-			ComponentLabelPanel labelR = new ComponentLabelPanel(" [description] ", 3, gridy)
-					.setContainsAnchor(GridBagConstraints.EAST)
-					.setContainsInsets(new Insets(0,0,5,5));
-			deliveryConditionPanel.add(labelR.getLabel(), labelR.getContains());
-			
-			ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getDeliveryCondition().getDescription(), 4, gridy)
-					.setContainsFill(GridBagConstraints.HORIZONTAL)
-					.setContainsInsets(new Insets(0,0,5,5))
-					.setTextFieldColumns(10);
-			deliveryConditionPanel.add(textField.getTextField(), textField.getContains());				
-		}
-		
 		
 		gbl_deliveryConditionPane.columnWidths = new int[]{10, 10, 0, 0, 0, 10, 0};
 		gbl_deliveryConditionPane.rowHeights = getInt(gridy);
@@ -1940,7 +1942,7 @@ public class InvoicePanel {
 										.setContainsInsets(new Insets(0,0,5,5));
 								rosterPanel.add(labelR.getLabel(), labelR.getContains());
 								
-								ComponentTextFieldPanel textField = new ComponentTextFieldPanel(invoice.getRoster().getRosters().get(index).getUnits(), 4, gridy)
+								ComponentTextFieldPanel textField = new ComponentTextFieldPanel(WorkingOutcomingTable.Additional.getUnitName(invoice.getRoster().getRosters().get(index).getUnits()), 4, gridy)
 										.setContainsFill(GridBagConstraints.HORIZONTAL)
 										.setContainsInsets(new Insets(0,0,5,5))
 										.setTextFieldColumns(10);

@@ -340,6 +340,7 @@ public class SettingsFrame extends JFrame {
 				.setUrlService(urlServiceTextField.getText())
 				.setFolderInvoicePath(folderInvoicePathTextField.getText())
 				.setLoadfileMenuitem(showLoadFileCheckBox.isSelected())
+				.setfolderXsdPath(folderInvoicePathTextField.getText())
 				.build();
 		
 		if(!ApplicationProperties.getInstance().equals(temp)){
@@ -351,6 +352,7 @@ public class SettingsFrame extends JFrame {
 				ApplicationProperties.getInstance().setDbPath(temp.getDbPath());
 				ApplicationProperties.getInstance().setUrlService(temp.getUrlService());
 				ApplicationProperties.getInstance().setFolderInvoicePath(temp.getFolderInvoicePath());
+				ApplicationProperties.getInstance().setFolderXsdPath(temp.getFolderXsdPath());
 				ApplicationProperties.getInstance().setLoadfileMenuitem(temp.getLoadfileMenuitem());
 				ApplicationProperties.getInstance().saveProperties();
 				MainFrame.updateVisibleLoadFile();

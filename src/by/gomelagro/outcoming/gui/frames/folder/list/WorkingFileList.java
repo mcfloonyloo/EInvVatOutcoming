@@ -41,9 +41,15 @@ public class WorkingFileList {
 									backColor = FileCheckBoxFont.getOrangeBack();
 									block = false;
 								}else{
-									foreColor = FileCheckBoxFont.getGreenFore();
-									backColor = FileCheckBoxFont.getGreenBack();
-									block = false;
+									if(test.isPositiveAmounts()){
+										foreColor = FileCheckBoxFont.getGreenFore();
+										backColor = FileCheckBoxFont.getGreenBack();
+										block = false;
+									}else{
+										foreColor = FileCheckBoxFont.getBlueFore();
+										backColor = FileCheckBoxFont.getBlueBack();
+										block = true;
+									}
 								}
 								
 							}else{

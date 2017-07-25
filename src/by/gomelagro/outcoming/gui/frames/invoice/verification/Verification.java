@@ -52,11 +52,11 @@ public class Verification {
 		boolean result = true;
 		//если поле существует
 		if(invoice != null){
-				//значение поля найдено
-				result = true;
-			}else{//иначе - не найдено
-				result = false;
-			}
+			//значение поля найдено
+			result = true;
+		}else{//иначе - не найдено
+			result = false;
+		}
 		return result;
 	}
 	

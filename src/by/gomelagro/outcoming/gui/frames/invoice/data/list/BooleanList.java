@@ -37,4 +37,12 @@ public class BooleanList extends AbstractList<Boolean> {
 		}
 		return result;
 	}
+	
+	public String toString(){
+		String result = "";
+		for(int index = 0; index < size; index++){
+			result += list[index]+"\n";
+		}
+		return result;
+	}
 }

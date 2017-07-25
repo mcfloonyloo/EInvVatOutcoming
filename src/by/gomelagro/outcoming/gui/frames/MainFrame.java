@@ -34,14 +34,17 @@ import javax.swing.border.BevelBorder;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
 import by.avest.edoc.client.AvEStatus;
+import by.gomelagro.outcoming.base.ApplicationConstants;
 import by.gomelagro.outcoming.format.date.InvoiceDateFormat;
 import by.gomelagro.outcoming.gui.console.component.JConsole;
 import by.gomelagro.outcoming.gui.db.ConnectionDB;
 import by.gomelagro.outcoming.gui.db.WorkingOutcomingTable;
 import by.gomelagro.outcoming.gui.db.files.WorkingFiles;
+import by.gomelagro.outcoming.gui.frames.count.ILoadCount;
+import by.gomelagro.outcoming.gui.frames.count.InsertLoadCount;
+import by.gomelagro.outcoming.gui.frames.count.UpdateCount;
 import by.gomelagro.outcoming.gui.frames.enstatus.UpdateEnStatus;
-import by.gomelagro.outcoming.gui.frames.invoice.Invoice;
-import by.gomelagro.outcoming.gui.frames.invoice.LoadInvoice;
+import by.gomelagro.outcoming.gui.frames.invoice.data.list.StringList;
 import by.gomelagro.outcoming.gui.frames.list.JMonthPanel;
 import by.gomelagro.outcoming.gui.frames.list.MonthPanelListModel;
 import by.gomelagro.outcoming.gui.frames.list.MonthYearItem;
@@ -78,7 +81,7 @@ public class MainFrame extends JFrame{
 	
 	private MonthPanelListModel model;
 	
-	private final String title = "Приложение для обработки исходящих ЭСЧФ v0.3.7.0 b4";
+	private final String title = ApplicationConstants.APP_MAINFRAME_TITLE+" "+ApplicationConstants.APP_VERSION;
 	
 	static{
 		ApplicationProperties.getInstance();	
@@ -401,7 +404,9 @@ public class MainFrame extends JFrame{
 			public void mousePressed(MouseEvent evt) {
 				if(loadFileMenuItem.isEnabled()){
 					loadFile();
+					fillYear();
 					selectYear();
+					updateMainPanel(yearComboBox.getItemAt(yearComboBox.getSelectedIndex()));
 				}
 			}
 		});
@@ -475,6 +480,59 @@ public class MainFrame extends JFrame{
 			}
 		});
 		saveMenu.add(saveBetweenMenuItem);
+
+		listMenu.addSeparator();
+		
+		JMenuItem statMenuItem = new JMenuItem("Статистика");
+		statMenuItem.addMouseListener(new MouseAdapter() {
+			@Override
+			public void mousePressed(MouseEvent evt) {
+				console.setText("");
+				StringList list = new StringList();
+				try {
+					list = WorkingOutcomingTable.Statistics.getStatisticLoad(10);
+				} catch (SQLException e) {
+					System.err.println("Ошибка загрузки статистики");
+					list.clear();
+				}
+				if(list.size() > 0){
+					System.out.println("Статистика обновления ЭСЧФ:");
+					for(String item:list){
+						System.out.println(item);
+					}
+					System.out.println("---");
+				}else{
+					if(list.size() == 0){
+						System.out.println("Отсутствуют записи о статистике обновления ЭСЧФ");
+					}else{
+						System.err.println("Невозможная ошибка загрузки статистики");
+					}
+				}
+
+				list.clear();
+				
+				try{
+					list = WorkingOutcomingTable.Statistics.getStatisticSend(10);
+				}catch(SQLException e){
+					System.err.println("Ошибка загрузки статистики");
+					list.clear();
+				}
+				if(list.size() > 0){
+					System.out.println("Статистика отправления ЭСЧФ на портал:");
+					for(String item:list){
+						System.out.println(item);
+					}
+					System.out.println("---");
+				}else{
+					if(list.size() == 0){
+						System.out.println("Отсутствуют записи о статистике отправления ЭСЧФ на портал");
+					}else{
+						System.err.println("Невозможная ошибка загрузки статистики");
+					}
+				}
+			}
+		});
+		listMenu.add(statMenuItem);
 	}
 
 	public static void updateVisibleLoadFile(){
@@ -595,7 +653,7 @@ public class MainFrame extends JFrame{
 		}
 	}
 	
-	private void loadFile(){
+	/*private void loadFile(){
 		JFileChooser chooser = new JFileChooser();
 		int res = chooser.showDialog(null, "Открыть");
 		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
@@ -695,10 +753,10 @@ public class MainFrame extends JFrame{
 									}
 								}
 							}
-						/*} catch (SQLException | ParseException e) {
+						} catch (SQLException | ParseException e) {
 							JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Загрузка файла прервана","Ошибка",JOptionPane.ERROR_MESSAGE);
 							progress.disactivated();
-						}*/
+						}
 						JOptionPane.showMessageDialog(null, "Добавлено "+notavialCount+" ЭСЧФ"+System.lineSeparator()+
 								"Не добавлено из-за их дублирования "+avialCount+" ЭСЧФ"+System.lineSeparator()+
 								"Обновлены статусы из файла у " + updateCount + " ЭСЧФ"+System.lineSeparator()+
@@ -714,8 +772,110 @@ public class MainFrame extends JFrame{
 			}			
 		};	
 		worker.execute();
-	}
+	}*/
 		
+	private void loadFile(){
+		JFileChooser chooser = new JFileChooser();
+		chooser.setMultiSelectionEnabled(false);
+		chooser.addChoosableFileFilter(new FileNameExtensionFilter("CSV files (.csv)", "csv"));
+		chooser.setAcceptAllFileFilterUsed(false);
+		chooser.setFileSelectionMode(JFileChooser.FILES_ONLY);
+		int res = chooser.showDialog(null, "Открыть");
+		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
+			@Override
+			protected Void doInBackground() throws Exception {
+				List<String> lines = null;
+				if(res == JFileChooser.APPROVE_OPTION){
+					try {
+						lines = WorkingFiles.readCSVFile(chooser.getSelectedFile());
+					} catch (IOException e) {
+						JOptionPane.showMessageDialog(null, e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+					if(lines != null){
+						ILoadCount insert = new InsertLoadCount();
+						ILoadCount update = new UpdateCount();
+						
+						LoadFileProgressBar progress = new LoadFileProgressBar(lines.size()).activated();
+						//проверка наличия УНП в сертификате
+						//String unp = "400047886";
+						String unp = Certificate.getInstance().getUnp();
+						try{
+							int limit = ApplicationConstants.CSV_COUNTCOLUMNS;//количество столбцов							
+							for(int index=0; index<lines.size();index++){
+								String[] fields = lines.get(index).split(";",limit);
+								if(fields[8].trim().equals(unp)){//изменить на чтение сертификата
+									System.out.println("Запись "+(index++)+": Попытка чтения записи исходящей ЭСЧФ из файла");
+								}else{
+									switch(WorkingOutcomingTable.Count.getCountRecord(fields[13])){
+									case -1: {insert.addErrorCount();; System.err.println("ЭСЧФ "+fields[13]+" счет-фактура не найден"); break;}
+									case  0: {if(WorkingOutcomingTable.Insert.insertOutcoming(fields)) {insert.addBaseCount();}else{
+											insert.addErrorCount();;
+											System.err.println("ЭСЧФ "+fields[13]+": ошибка добавления счета-фактуры");
+										} break;
+									}
+									case  1: {
+										int id = WorkingOutcomingTable.Field.getOutcomingId(fields[13]);
+										if(id > 0){
+											AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(fields[13]);
+											boolean isValid = status.verify();
+											if(isValid){
+												if(!WorkingOutcomingTable.Field.getOutcomingStatus(String.valueOf(id)).trim().equals(status.getStatus())){
+													if(WorkingOutcomingTable.Insert.insertOutcomingStatusesFile(String.valueOf(id), status.getStatus(), Status.valueEnOf(status.getStatus()))){
+														update.addBaseCount();
+													}else{
+														update.addErrorCount();;
+														System.err.println("ЭСЧФ "+fields[13]+": ошибка добавления статуса");
+													}
+												}else{
+													update.addMissCount();
+												}
+											}else{
+												update.addErrorCount();;
+												System.err.println("ЭСЧФ "+fields[13]+": ошибка проверки статуса");
+											}
+											
+										}else{
+											update.addErrorCount();
+											System.err.println("ЭСЧФ "+fields[13]+": код не найден");
+										}
+										break;
+									}
+									default: insert.addMissCount(); break;
+									}
+									progress.setProgress(index+1);		
+									if(progress.isCancelled()){
+										JOptionPane.showMessageDialog(null, "Загрузка файла отменена","Внимание",JOptionPane.WARNING_MESSAGE);
+										progress.disactivated();
+										break;										
+									}
+								}
+							}
+						} catch (SQLException | ParseException e) {
+							JOptionPane.showMessageDialog(null, e.getLocalizedMessage()+System.lineSeparator()+"Загрузка файла прервана","Ошибка",JOptionPane.ERROR_MESSAGE);
+							progress.disactivated();
+						}
+						JOptionPane.showMessageDialog(null, "Добавлено "+insert.getBaseCount()+" ЭСЧФ"+System.lineSeparator()+
+								"Не добавлено из-за их дублирования "+insert.getMissCount()+" ЭСЧФ"+System.lineSeparator()+
+								"Не добавлено из-за ошибок "+insert.getErrorCount()+" ЭСЧФ" + System.lineSeparator() +
+								"Обновлены статусы из файла у " + update.getBaseCount() + " ЭСЧФ"+System.lineSeparator()+
+								"Пропущено обновление статусов у " + update.getMissCount() + " ЭСЧФ" + System.lineSeparator() +
+								"Пропущено обновление статусов из-за ошибок у " + update.getErrorCount() + " ЭСЧФ"
+								,"Информация",JOptionPane.INFORMATION_MESSAGE);
+						if(!WorkingOutcomingTable.Statistics.insertStatisticLoad(insert, update)){
+							System.err.println("Ошибка добавления статистических данных о загрузке ЭСЧФ");
+						}
+						progress.disactivated();
+					}else{
+						JOptionPane.showMessageDialog(null, "Загружен файл неверной структуры"+System.lineSeparator()+
+								"Выберите другой файл","Ошибка",JOptionPane.ERROR_MESSAGE);
+					}
+				}
+				return null;		
+			}			
+		};	
+		worker.execute();
+	}
+	
 	private void exit(){
 		String textDialog;
 		if(EVatServiceSingleton.getInstance().isAuthorized()){
