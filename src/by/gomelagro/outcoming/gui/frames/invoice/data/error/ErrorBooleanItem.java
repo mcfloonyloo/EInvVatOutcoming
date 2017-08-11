@@ -1,4 +1,4 @@
-package by.gomelagro.outcoming.gui.frames.invoice.data.list.item;
+package by.gomelagro.outcoming.gui.frames.invoice.data.error;
 
 public class ErrorBooleanItem {
 	private String error;

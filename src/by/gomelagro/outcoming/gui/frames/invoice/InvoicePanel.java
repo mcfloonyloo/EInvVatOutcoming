@@ -13,9 +13,9 @@ import javax.swing.JScrollPane;
 import by.gomelagro.outcoming.format.date.InvoiceDateFormat;
 import by.gomelagro.outcoming.format.lines.HtmlLines;
 import by.gomelagro.outcoming.gui.db.WorkingOutcomingTable;
-import by.gomelagro.outcoming.gui.frames.invoice.data.list.DoubleList;
-import by.gomelagro.outcoming.gui.frames.invoice.data.list.IntegerList;
-import by.gomelagro.outcoming.gui.frames.invoice.verification.Verification;
+import by.gomelagro.outcoming.gui.frames.invoice.data.list.basic.DoubleList;
+import by.gomelagro.outcoming.gui.frames.invoice.data.list.basic.IntegerList;
+import by.gomelagro.outcoming.gui.frames.invoice.verification.Validation;
 
 public class InvoicePanel {
 	private Invoice invoice;
@@ -39,8 +39,8 @@ public class InvoicePanel {
 		GridBagLayout gbl_generalPanel = new GridBagLayout();
 		generalPanel.setLayout(gbl_generalPanel);
 		int gridy = 0;
-		if(Verification.verifySection(invoice.getGeneral())){			
-			if(Verification.verifyField(invoice.getSender())){
+		if(Validation.verifySection(invoice.getGeneral())){			
+			if(Validation.verifyField(invoice.getSender())){
 				gridy++;//1
 				ComponentLabelPanel label = new ComponentLabelPanel("Субъект хозяйствования, составляющий ЭСЧФ ", 1, gridy)
 						.setLabelFont(FONT)
@@ -61,7 +61,7 @@ public class InvoicePanel {
 			}
 			
 			gridy++;//2
-			if(Verification.verifyField(invoice.getGeneral().getNumber())){
+			if(Validation.verifyField(invoice.getGeneral().getNumber())){
 				gridy++;//3
 				ComponentLabelPanel label = new ComponentLabelPanel("Номер ЭСЧФ ", 1, gridy)
 						.setLabelFont(FONT)
@@ -81,7 +81,7 @@ public class InvoicePanel {
 				generalPanel.add(textField.getTextField(), textField.getContains());
 			}
 			
-			if(Verification.verifyField(invoice.getGeneral().getDateIssuance())){
+			if(Validation.verifyField(invoice.getGeneral().getDateIssuance())){
 				gridy++;//4
 				ComponentLabelPanel label = new ComponentLabelPanel("Дата выставления ЭСЧФ", 1, gridy)
 						.setLabelFont(FONT)
@@ -108,7 +108,7 @@ public class InvoicePanel {
 				generalPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getGeneral().getDateTransaction())){
+			if(Validation.verifyField(invoice.getGeneral().getDateTransaction())){
 				gridy++;//5
 				ComponentLabelPanel label = new ComponentLabelPanel("Дата совершения операции ЭСЧФ ", 1, gridy)
 						.setLabelFont(FONT)
@@ -135,7 +135,7 @@ public class InvoicePanel {
 				generalPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getGeneral().getDocumentType())){
+			if(Validation.verifyField(invoice.getGeneral().getDocumentType())){
 				gridy++;//6
 				ComponentLabelPanel label = new ComponentLabelPanel("Тип ЭСЧФ ", 1, gridy)
 						.setLabelFont(FONT)
@@ -177,7 +177,7 @@ public class InvoicePanel {
 				generalPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getGeneral().getInvoice())){
+			if(Validation.verifyField(invoice.getGeneral().getInvoice())){
 				gridy++;//7
 				ComponentLabelPanel label = new ComponentLabelPanel("К ЭСЧФ", 1, gridy)
 						.setLabelFont(FONT)
@@ -197,7 +197,7 @@ public class InvoicePanel {
 				generalPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getGeneral().getDateCancelled())){
+			if(Validation.verifyField(invoice.getGeneral().getDateCancelled())){
 				gridy++;//8
 				ComponentLabelPanel label = new ComponentLabelPanel("Дата аннулирования ЭСЧФ ", 1, gridy)
 						.setLabelFont(FONT)
@@ -224,7 +224,7 @@ public class InvoicePanel {
 				generalPanel.add(textField.getTextField(), textField.getContains());
 			}
 					
-			if(Verification.verifyField(invoice.getGeneral().getSendToRecipient())){
+			if(Validation.verifyField(invoice.getGeneral().getSendToRecipient())){
 				gridy++;//9
 				ComponentLabelPanel label = new ComponentLabelPanel("Отобразить получателю ", 1, gridy)
 						.setLabelFont(FONT)
@@ -260,8 +260,8 @@ public class InvoicePanel {
 		providerPanel.setLayout(gbl_providerPanel);
 		
 		int gridy = 0;//0
-		if(Verification.verifySection(invoice.getProvider())){
-			if(Verification.verifyField(invoice.getProvider().getProviderStatus())){
+		if(Validation.verifySection(invoice.getProvider())){
+			if(Validation.verifyField(invoice.getProvider().getProviderStatus())){
 				gridy++;//1
 				ComponentLabelPanel label = new ComponentLabelPanel("Статус поставщика", 1, gridy)
 						.setLabelFont(FONT)
@@ -324,7 +324,7 @@ public class InvoicePanel {
 				providerPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getProvider().getDependentPerson())){
+			if(Validation.verifyField(invoice.getProvider().getDependentPerson())){
 				gridy++;//2
 				ComponentLabelPanel label = new ComponentLabelPanel("Взаимозависимое лицо", 2, gridy)
 						.setLabelFont(FONT)
@@ -358,7 +358,7 @@ public class InvoicePanel {
 				providerPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getProvider().getResidentsOfOffshore())){
+			if(Validation.verifyField(invoice.getProvider().getResidentsOfOffshore())){
 				gridy++;//3
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Сделка с резидентом","оффшорной группы"}), 2, gridy)
 						.setLabelFont(FONT)
@@ -394,7 +394,7 @@ public class InvoicePanel {
 				gridy++;//4
 			}
 				
-			if(Verification.verifyField(invoice.getProvider().getSpecialDealGoods())){
+			if(Validation.verifyField(invoice.getProvider().getSpecialDealGoods())){
 				gridy++;//5
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Сделка с товарами по перечню,",
 																			"определяемому Правительством",
@@ -434,7 +434,7 @@ public class InvoicePanel {
 				gridy = gridy + 3;//6-8
 			}
 			
-			if(Verification.verifyField(invoice.getProvider().getBigCompany())){
+			if(Validation.verifyField(invoice.getProvider().getBigCompany())){
 				gridy++;//9
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Организация, включенная в перечень",
 				 															"крупных налогоплательщиков"}), 2, gridy)
@@ -472,7 +472,7 @@ public class InvoicePanel {
 			}
 			
 			gridy++;
-			if(Verification.verifyField(invoice.getProvider().getCountryCode())){
+			if(Validation.verifyField(invoice.getProvider().getCountryCode())){
 				gridy++;//11
 				ComponentLabelPanel label = new ComponentLabelPanel("Код страны поставщика", 1, gridy)
 						.setLabelFont(FONT)
@@ -493,7 +493,7 @@ public class InvoicePanel {
 				providerPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getProvider().getUnp())){
+			if(Validation.verifyField(invoice.getProvider().getUnp())){
 				gridy++;//12
 				ComponentLabelPanel label = new ComponentLabelPanel("УНП", 1, gridy)
 						.setLabelFont(FONT)
@@ -514,7 +514,7 @@ public class InvoicePanel {
 				providerPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getProvider().getBranchCode())){
+			if(Validation.verifyField(invoice.getProvider().getBranchCode())){
 				gridy++;//13
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Код филиала","(обособленного подразделения)"}), 2, gridy)
 					.setLabelFont(FONT)
@@ -536,7 +536,7 @@ public class InvoicePanel {
 				gridy++;//14
 			}
 				
-			if(Verification.verifyField(invoice.getProvider().getName())){
+			if(Validation.verifyField(invoice.getProvider().getName())){
 				gridy++;//15
 				ComponentLabelPanel label = new ComponentLabelPanel("Поставщик", 1, gridy)
 						.setLabelFont(FONT)
@@ -557,7 +557,7 @@ public class InvoicePanel {
 				providerPanel.add(textField.getTextField(), textField.getContains());
 			}
 			
-			if(Verification.verifyField(invoice.getProvider().getAddress())){
+			if(Validation.verifyField(invoice.getProvider().getAddress())){
 				gridy++;//16
 				ComponentLabelPanel label = new ComponentLabelPanel("Юридический адрес", 1, gridy)
 						.setLabelFont(FONT)
@@ -578,9 +578,9 @@ public class InvoicePanel {
 				providerPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifySection(invoice.getProvider().getPrincipal())){
+			if(Validation.verifySection(invoice.getProvider().getPrincipal())){
 				gridy++;//17
-				if(Verification.verifyField(invoice.getProvider().getPrincipal().getNumber())){
+				if(Validation.verifyField(invoice.getProvider().getPrincipal().getNumber())){
 					gridy++;//18
 					ComponentLabelPanel label = new ComponentLabelPanel("Номер ЭСЧФ комитента", 1, gridy)
 							.setLabelFont(FONT)
@@ -600,7 +600,7 @@ public class InvoicePanel {
 							.setTextFieldColumns(10);
 					providerPanel.add(textField.getTextField(), textField.getContains());
 				}
-				if(Verification.verifyField(invoice.getProvider().getPrincipal().getDate())){
+				if(Validation.verifyField(invoice.getProvider().getPrincipal().getDate())){
 					gridy++;//19	
 					ComponentLabelPanel label = new ComponentLabelPanel("Дата выписки", 1, gridy)
 							.setLabelFont(FONT)
@@ -629,9 +629,9 @@ public class InvoicePanel {
 				}
 			}
 				
-			if(Verification.verifySection(invoice.getProvider().getVendor())){
+			if(Validation.verifySection(invoice.getProvider().getVendor())){
 				gridy++;//20
-				if(Verification.verifyField(invoice.getProvider().getVendor().getNumber())){
+				if(Validation.verifyField(invoice.getProvider().getVendor().getNumber())){
 					gridy++;//21
 					ComponentLabelPanel label = new ComponentLabelPanel("Номер ЭСЧФ продавца", 1, gridy)
 							.setLabelFont(FONT)
@@ -651,7 +651,7 @@ public class InvoicePanel {
 							.setTextFieldColumns(10);
 					providerPanel.add(textField.getTextField(), textField.getContains());
 				}				
-				if(Verification.verifyField(invoice.getProvider().getVendor().getDate())){
+				if(Validation.verifyField(invoice.getProvider().getVendor().getDate())){
 					gridy++;//22
 					ComponentLabelPanel label = new ComponentLabelPanel("Дата выписки", 1, gridy)
 							.setLabelFont(FONT)
@@ -681,7 +681,7 @@ public class InvoicePanel {
 			}
 				
 			gridy++;//23
-			if(Verification.verifyField(invoice.getProvider().getDeclaration())){
+			if(Validation.verifyField(invoice.getProvider().getDeclaration())){
 				gridy++;//24
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Регистрационный номер","выпуска товаров"}), 1, gridy)
 							.setLabelFont(FONT)
@@ -704,7 +704,7 @@ public class InvoicePanel {
 				gridy++;//25	
 			}
 				
-			if(Verification.verifyField(invoice.getProvider().getDateRelease())){
+			if(Validation.verifyField(invoice.getProvider().getDateRelease())){
 				gridy++;//26
 				ComponentLabelPanel label = new ComponentLabelPanel("Дата выпуска товаров", 2, gridy)
 						.setLabelFont(FONT)
@@ -731,7 +731,7 @@ public class InvoicePanel {
 				providerPanel.add(textField.getTextField(), textField.getContains());
 			}	
 			
-			if(Verification.verifyField(invoice.getProvider().getDateActualExport())){
+			if(Validation.verifyField(invoice.getProvider().getDateActualExport())){
 				gridy++;//27
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Дата разрешения","на убытие товаров"}), 2, gridy)
 						.setLabelFont(FONT)
@@ -761,9 +761,9 @@ public class InvoicePanel {
 				gridy++;//28
 			}
 					
-			if(Verification.verifySection(invoice.getProvider().getTaxes())){
+			if(Validation.verifySection(invoice.getProvider().getTaxes())){
 				gridy++;//29
-				if(Verification.verifyField(invoice.getProvider().getTaxes().getNumber())){
+				if(Validation.verifyField(invoice.getProvider().getTaxes().getNumber())){
 					gridy++;//30
 					ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Реквизиты заявления о ввозе товаров","и уплате косвенных налогов - номер"}), 1, gridy)
 							.setLabelFont(FONT)
@@ -787,7 +787,7 @@ public class InvoicePanel {
 					gridy++;//31
 				}
 					
-				if(Verification.verifyField(invoice.getProvider().getTaxes().getDate())){
+				if(Validation.verifyField(invoice.getProvider().getTaxes().getDate())){
 					gridy++;//32
 					ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Реквизиты заявления о ввозе товаров","и уплате косвенных налогов - дата"}), 1, gridy)
 							.setLabelFont(FONT)
@@ -836,8 +836,8 @@ public class InvoicePanel {
 		recipientPanel.setLayout(gbl_recipientPanel);
 		
 		int gridy = 0;//0
-		if(Verification.verifySection(invoice.getRecipient())){
-			if(Verification.verifyField(invoice.getRecipient().getRecipientStatus())){
+		if(Validation.verifySection(invoice.getRecipient())){
+			if(Validation.verifyField(invoice.getRecipient().getRecipientStatus())){
 				gridy++;//1
 				ComponentLabelPanel label = new ComponentLabelPanel("Статус получателя ", 1, gridy)
 						.setLabelFont(FONT)
@@ -892,7 +892,7 @@ public class InvoicePanel {
 				recipientPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getRecipient().getDependentPerson())){
+			if(Validation.verifyField(invoice.getRecipient().getDependentPerson())){
 				gridy++;//2
 				ComponentLabelPanel label = new ComponentLabelPanel("Взаимозависимое лицо ", 2, gridy)
 						.setLabelFont(FONT)
@@ -926,7 +926,7 @@ public class InvoicePanel {
 				recipientPanel.add(textField.getTextField(), textField.getContains());
 			}
 			
-			if(Verification.verifyField(invoice.getRecipient().getResidentsOfOffshore())){
+			if(Validation.verifyField(invoice.getRecipient().getResidentsOfOffshore())){
 				gridy++;//3
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Сделка с резидентом",
 				   																			"оффшорной группы"}), 2, gridy)
@@ -964,7 +964,7 @@ public class InvoicePanel {
 				gridy++;//4
 			}
 				
-			if(Verification.verifyField(invoice.getRecipient().getSpecialDealGoods())){
+			if(Validation.verifyField(invoice.getRecipient().getSpecialDealGoods())){
 				gridy++;//5
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Сделка с товарами по перечню,",
 							  																			"определяемому Правительством",
@@ -1004,7 +1004,7 @@ public class InvoicePanel {
 				gridy = gridy + 3;//6-8
 			}
 			
-			if(Verification.verifyField(invoice.getRecipient().getBigCompany())){
+			if(Validation.verifyField(invoice.getRecipient().getBigCompany())){
 				gridy++;//9
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Организация, включенная в перечень",
 																										"крупных плательщиков"}), 2, gridy)
@@ -1041,7 +1041,7 @@ public class InvoicePanel {
 				gridy++;//10
 			}
 				
-			if(Verification.verifyField(invoice.getRecipient().getCountryCode())){
+			if(Validation.verifyField(invoice.getRecipient().getCountryCode())){
 				gridy++;//11
 				ComponentLabelPanel label = new ComponentLabelPanel("Код страны получателя ", 1, gridy)
 						.setLabelFont(FONT)
@@ -1062,7 +1062,7 @@ public class InvoicePanel {
 				recipientPanel.add(textField.getTextField(), textField.getContains());
 			}
 			
-			if(Verification.verifyField(invoice.getRecipient().getUnp())){	
+			if(Validation.verifyField(invoice.getRecipient().getUnp())){	
 				gridy++;//12
 				ComponentLabelPanel label = new ComponentLabelPanel("УНП ", 1, gridy)
 						.setLabelFont(FONT)
@@ -1083,7 +1083,7 @@ public class InvoicePanel {
 				recipientPanel.add(textField.getTextField(), textField.getContains());
 			}
 					
-			if(Verification.verifyField(invoice.getRecipient().getBranchCode())){
+			if(Validation.verifyField(invoice.getRecipient().getBranchCode())){
 				gridy++;//13
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Код филиала",
 																							"(обособленного подразделения"}), 2, gridy)
@@ -1106,7 +1106,7 @@ public class InvoicePanel {
 				gridy++;//14
 			}
 				
-			if(Verification.verifyField(invoice.getRecipient().getName())){
+			if(Validation.verifyField(invoice.getRecipient().getName())){
 				gridy++;//15
 				ComponentLabelPanel label = new ComponentLabelPanel("Получатель ", 1, gridy)
 						.setLabelFont(FONT)
@@ -1128,7 +1128,7 @@ public class InvoicePanel {
 				
 			}
 				
-			if(Verification.verifyField(invoice.getRecipient().getAddress())){
+			if(Validation.verifyField(invoice.getRecipient().getAddress())){
 				gridy++;//16
 				ComponentLabelPanel label = new ComponentLabelPanel("Юридический адрес ", 1, gridy)
 						.setLabelFont(FONT)
@@ -1149,7 +1149,7 @@ public class InvoicePanel {
 				recipientPanel.add(textField.getTextField(), textField.getContains());
 			}
 				
-			if(Verification.verifyField(invoice.getRecipient().getDeclaration())){
+			if(Validation.verifyField(invoice.getRecipient().getDeclaration())){
 				gridy++;//17
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Регистрационный номер",
 																								"выпуска товаров"}), 1, gridy)
@@ -1173,9 +1173,9 @@ public class InvoicePanel {
 				gridy++;//18
 			}
 			
-			if(Verification.verifySection(invoice.getRecipient().getTaxes())){
+			if(Validation.verifySection(invoice.getRecipient().getTaxes())){
 				gridy++;//19
-				if(Verification.verifyField(invoice.getRecipient().getTaxes().getNumber())){
+				if(Validation.verifyField(invoice.getRecipient().getTaxes().getNumber())){
 					gridy++;//20
 					ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Реквизиты заявления о ввозе товаров",
 																							 "и уплате косвенных налогов - номер"}), 1, gridy)
@@ -1199,7 +1199,7 @@ public class InvoicePanel {
 					gridy++;//21
 				}
 				
-				if(Verification.verifyField(invoice.getRecipient().getTaxes().getDate())){
+				if(Validation.verifyField(invoice.getRecipient().getTaxes().getDate())){
 					gridy++;//22
 					ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Реквизиты заявления о ввозе товаров",
 							   																				"и уплате косвенных налогов - дата"}), 1, gridy)
@@ -1232,7 +1232,7 @@ public class InvoicePanel {
 			}
 				
 			gridy++;//24
-			if(Verification.verifyField(invoice.getRecipient().getDateImport())){
+			if(Validation.verifyField(invoice.getRecipient().getDateImport())){
 				gridy++;//25
 				
 				ComponentLabelPanel label = new ComponentLabelPanel("Дата ввоза товаров", 2,gridy)
@@ -1276,9 +1276,9 @@ public class InvoicePanel {
 		senderReceiverPanel.setLayout(gbl_senderReceiverPanel);
 		
 		int gridy = 0;//0
-		if(Verification.verifySection(invoice.getSenderReceiver())){
+		if(Validation.verifySection(invoice.getSenderReceiver())){
 			 
-			if(Verification.verifyList(invoice.getSenderReceiver().getConsignors())){
+			if(Validation.verifyList(invoice.getSenderReceiver().getConsignors())){
 				gridy++;//1
 				ComponentLabelPanel labelConsignor = new ComponentLabelPanel("ГРУЗООТПРАВИТЕЛИ:", 1, gridy)
 						.setLabelFont(FONT)
@@ -1289,9 +1289,9 @@ public class InvoicePanel {
 				gridy++;//2
 				
 				for(int index=0;index<invoice.getSenderReceiver().getConsignors().size();index++){
-					if(Verification.verifySection(invoice.getSenderReceiver().getConsignors().get(index))){
+					if(Validation.verifySection(invoice.getSenderReceiver().getConsignors().get(index))){
 						gridy++;//3
-						if(Verification.verifyField(invoice.getSenderReceiver().getConsignors().get(index).getCountryCode())){
+						if(Validation.verifyField(invoice.getSenderReceiver().getConsignors().get(index).getCountryCode())){
 							ComponentLabelPanel label = new ComponentLabelPanel("Код страны",1,gridy)
 									.setLabelFont(FONT)
 									.setContainsAnchor(GridBagConstraints.WEST)
@@ -1310,7 +1310,7 @@ public class InvoicePanel {
 							senderReceiverPanel.add(textField.getTextField(),textField.getContains());
 						}
 						
-						if(Verification.verifyField(invoice.getSenderReceiver().getConsignors().get(index).getUnp())){
+						if(Validation.verifyField(invoice.getSenderReceiver().getConsignors().get(index).getUnp())){
 							gridy++;//4
 							ComponentLabelPanel label = new ComponentLabelPanel("УНП",1,gridy)
 									.setLabelFont(FONT)
@@ -1330,7 +1330,7 @@ public class InvoicePanel {
 							senderReceiverPanel.add(textField.getTextField(),textField.getContains());
 						}
 						
-						if(Verification.verifyField(invoice.getSenderReceiver().getConsignors().get(index).getName())){
+						if(Validation.verifyField(invoice.getSenderReceiver().getConsignors().get(index).getName())){
 							gridy++;//5
 							ComponentLabelPanel label = new ComponentLabelPanel("Наименование",1,gridy)
 									.setLabelFont(FONT)
@@ -1350,7 +1350,7 @@ public class InvoicePanel {
 							senderReceiverPanel.add(textField.getTextField(),textField.getContains());
 						}
 						
-						if(Verification.verifyField(invoice.getSenderReceiver().getConsignors().get(index).getAddress())){
+						if(Validation.verifyField(invoice.getSenderReceiver().getConsignors().get(index).getAddress())){
 							gridy++;//6
 							ComponentLabelPanel label = new ComponentLabelPanel("УНП",1,gridy)
 									.setLabelFont(FONT)
@@ -1376,7 +1376,7 @@ public class InvoicePanel {
 			}
 			
 			gridy++;//9
-			if(Verification.verifyList(invoice.getSenderReceiver().getConsignees())){
+			if(Validation.verifyList(invoice.getSenderReceiver().getConsignees())){
 				gridy++;//10
 				ComponentLabelPanel labelConsignee = new ComponentLabelPanel("ГРУЗОПОЛУЧАТЕЛИ:", 1, gridy)
 						.setLabelFont(FONT)
@@ -1387,9 +1387,9 @@ public class InvoicePanel {
 				gridy++;//11
 				
 				for(int index = 0;index<invoice.getSenderReceiver().getConsignees().size();index++){
-					if(Verification.verifySection(invoice.getSenderReceiver().getConsignees().get(index))){
+					if(Validation.verifySection(invoice.getSenderReceiver().getConsignees().get(index))){
 						gridy++;//12
-						if(Verification.verifyField(invoice.getSenderReceiver().getConsignees().get(index).getCountryCode())){
+						if(Validation.verifyField(invoice.getSenderReceiver().getConsignees().get(index).getCountryCode())){
 							ComponentLabelPanel label = new ComponentLabelPanel("Код страны",1,gridy)
 									.setLabelFont(FONT)
 									.setContainsAnchor(GridBagConstraints.WEST)
@@ -1408,7 +1408,7 @@ public class InvoicePanel {
 							senderReceiverPanel.add(textField.getTextField(),textField.getContains());
 						}
 						
-						if(Verification.verifyField(invoice.getSenderReceiver().getConsignees().get(index).getUnp())){
+						if(Validation.verifyField(invoice.getSenderReceiver().getConsignees().get(index).getUnp())){
 							gridy++;//13
 							ComponentLabelPanel label = new ComponentLabelPanel("УНП",1,gridy)
 									.setLabelFont(FONT)
@@ -1428,7 +1428,7 @@ public class InvoicePanel {
 							senderReceiverPanel.add(textField.getTextField(),textField.getContains());
 						}
 						
-						if(Verification.verifyField(invoice.getSenderReceiver().getConsignees().get(index).getName())){
+						if(Validation.verifyField(invoice.getSenderReceiver().getConsignees().get(index).getName())){
 							gridy++;//14
 							ComponentLabelPanel label = new ComponentLabelPanel("Наименование",1,gridy)
 									.setLabelFont(FONT)
@@ -1448,7 +1448,7 @@ public class InvoicePanel {
 							senderReceiverPanel.add(textField.getTextField(),textField.getContains());
 						}
 						
-						if(Verification.verifyField(invoice.getSenderReceiver().getConsignees().get(index).getAddress())){
+						if(Validation.verifyField(invoice.getSenderReceiver().getConsignees().get(index).getAddress())){
 							gridy++;//15
 							ComponentLabelPanel label = new ComponentLabelPanel("УНП",1,gridy)
 									.setLabelFont(FONT)
@@ -1489,9 +1489,9 @@ public class InvoicePanel {
 		deliveryConditionPanel.setLayout(gbl_deliveryConditionPane);
 		
 		int gridy = 0;//0
-		if(Verification.verifySection(invoice.getDeliveryCondition())){
-			if(Verification.verifySection(invoice.getDeliveryCondition().getContract())){
-				if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getNumber())){
+		if(Validation.verifySection(invoice.getDeliveryCondition())){
+			if(Validation.verifySection(invoice.getDeliveryCondition().getContract())){
+				if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getNumber())){
 					gridy++;//1
 					ComponentLabelPanel label = new ComponentLabelPanel("Договор (контракт) на поставку товара", 1,gridy)
 							.setLabelFont(FONT)
@@ -1512,7 +1512,7 @@ public class InvoicePanel {
 					deliveryConditionPanel.add(textField.getTextField(), textField.getContains());				
 				}
 				
-				if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDate())){
+				if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDate())){
 					gridy++;//2
 					ComponentLabelPanel label = new ComponentLabelPanel("Дата договора (контракта)", 1,gridy)
 							.setContainsGridwidth(2)
@@ -1540,7 +1540,7 @@ public class InvoicePanel {
 					deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
 				}
 				gridy++;//3
-				if(Verification.verifyList(invoice.getDeliveryCondition().getContract().getDocuments())){
+				if(Validation.verifyList(invoice.getDeliveryCondition().getContract().getDocuments())){
 					gridy++;//4
 					ComponentLabelPanel labelTitle = new ComponentLabelPanel("ДОКУМЕНТЫ:", 1,gridy)
 							.setContainsGridwidth(2)
@@ -1551,7 +1551,7 @@ public class InvoicePanel {
 					gridy++;//5
 					
 					for(int index = 0;index<invoice.getDeliveryCondition().getContract().getDocuments().size();index++){
-						if(Verification.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index))){
+						if(Validation.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index))){
 							if(invoice.getDeliveryCondition().getContract().getDocuments().size() > 1){
 							gridy++;//6
 								ComponentLabelPanel labelNumber = new ComponentLabelPanel("Документ №"+String.valueOf(index+1), 1,gridy)
@@ -1563,7 +1563,7 @@ public class InvoicePanel {
 								gridy++;//7
 							}
 	
-							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate())){
+							if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate())){
 								gridy++;//8
 								ComponentLabelPanel label = new ComponentLabelPanel("Дата", 2,gridy)
 										.setLabelFont(FONT)
@@ -1590,7 +1590,7 @@ public class InvoicePanel {
 								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
 							}
 	
-							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode())){
+							if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode())){
 								gridy++;//9
 								ComponentLabelPanel label = new ComponentLabelPanel("Код типа бланка", 2,gridy)
 										.setLabelFont(FONT)
@@ -1610,7 +1610,7 @@ public class InvoicePanel {
 								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
 							}
 							
-							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria())){
+							if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria())){
 								gridy++;//10
 								ComponentLabelPanel label = new ComponentLabelPanel("Серия", 2,gridy)
 										.setLabelFont(FONT)
@@ -1630,7 +1630,7 @@ public class InvoicePanel {
 								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
 							}
 							
-							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber())){
+							if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber())){
 								gridy++;//11
 								ComponentLabelPanel label = new ComponentLabelPanel("Номер", 2, gridy)
 										.setLabelFont(FONT)
@@ -1650,8 +1650,8 @@ public class InvoicePanel {
 								deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
 							}
 							
-							if(Verification.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType())){
-								if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode())){
+							if(Validation.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType())){
+								if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode())){
 									gridy++;//12
 									ComponentLabelPanel label = new ComponentLabelPanel("Вид документа", 2,gridy)
 											.setLabelFont(FONT)
@@ -1671,7 +1671,7 @@ public class InvoicePanel {
 									deliveryConditionPanel.add(textField.getTextField(), textField.getContains());	
 								}
 								
-								if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getValue())){
+								if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getValue())){
 									gridy++;//13
 									ComponentLabelPanel label = new ComponentLabelPanel("Название", 2,gridy)
 											.setLabelFont(FONT)
@@ -1700,7 +1700,7 @@ public class InvoicePanel {
 			}
 			
 			
-			if(Verification.verifyField(invoice.getDeliveryCondition().getDescription())){
+			if(Validation.verifyField(invoice.getDeliveryCondition().getDescription())){
 				gridy++;//15
 				ComponentLabelPanel label = new ComponentLabelPanel("Дополнительные сведения", 1,gridy)
 						.setContainsGridheight(2)
@@ -1737,8 +1737,8 @@ public class InvoicePanel {
 		rosterPanel.setLayout(gbl_rosterPane);
 		
 		int gridy = 0;//0
-		if(Verification.verifySection(invoice.getRoster())){
-			if(Verification.verifyField(invoice.getRoster().getTotalCost())){
+		if(Validation.verifySection(invoice.getRoster())){
+			if(Validation.verifyField(invoice.getRoster().getTotalCost())){
 				gridy++;//1
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Всего по счёту. Стоимость товаров (работ,",
 																										"услуг) имущественных прав без НДС"}), 1,gridy)
@@ -1762,7 +1762,7 @@ public class InvoicePanel {
 				gridy = gridy + 2;//3
 			}
 			
-			if(Verification.verifyField(invoice.getRoster().getTotalExcise())){
+			if(Validation.verifyField(invoice.getRoster().getTotalExcise())){
 				gridy++;//4
 				ComponentLabelPanel label = new ComponentLabelPanel("Всего по счёту. Сумма акциза", 1,gridy)
 						.setContainsGridwidth(2)
@@ -1783,7 +1783,7 @@ public class InvoicePanel {
 				rosterPanel.add(textField.getTextField(), textField.getContains());	
 			}
 			
-			if(Verification.verifyField(invoice.getRoster().getTotalVat())){
+			if(Validation.verifyField(invoice.getRoster().getTotalVat())){
 				gridy++;//5
 				ComponentLabelPanel label = new ComponentLabelPanel("Всего по счёту. Сумма НДС", 1,gridy)
 						.setContainsGridwidth(2)
@@ -1804,7 +1804,7 @@ public class InvoicePanel {
 				rosterPanel.add(textField.getTextField(), textField.getContains());	
 			}
 			
-			if(Verification.verifyField(invoice.getRoster().getTotalCostVat())){
+			if(Validation.verifyField(invoice.getRoster().getTotalCostVat())){
 				gridy++;//6
 				ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Всего по счёту. Стоимость товаров (работ,",
 																										"услуг) имущественных прав с учётом НДС"}), 1,gridy)
@@ -1828,7 +1828,7 @@ public class InvoicePanel {
 				gridy = gridy + 2;//8
 			}
 			
-			if(Verification.verifyList(invoice.getRoster().getRosters())){
+			if(Validation.verifyList(invoice.getRoster().getRosters())){
 				gridy++;//9
 				ComponentLabelPanel labelTitle = new ComponentLabelPanel("СПИСОК ТОВАРОВ (УСЛУГ): ", 1,gridy)
 						.setContainsGridwidth(2)
@@ -1839,9 +1839,9 @@ public class InvoicePanel {
 				gridy++;//10
 				
 				for(int index = 0;index<invoice.getRoster().getRosters().size();index++){
-					if(Verification.verifySection(invoice.getRoster().getRosters().get(index))){
-						if(Verification.verifySection(invoice.getRoster().getRosters().get(index))){
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getNumber())){
+					if(Validation.verifySection(invoice.getRoster().getRosters().get(index))){
+						if(Validation.verifySection(invoice.getRoster().getRosters().get(index))){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getNumber())){
 								gridy++;//11
 								ComponentLabelPanel label = new ComponentLabelPanel("№ п/п", 1,gridy)
 										.setContainsGridwidth(2)
@@ -1862,7 +1862,7 @@ public class InvoicePanel {
 								rosterPanel.add(textField.getTextField(), textField.getContains());	
 							}
 							
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getName())){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getName())){
 								gridy++;//12
 								ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Наименование товара (работ, услуг),",
 																														"имущественных прав"}), 1,gridy)
@@ -1886,7 +1886,7 @@ public class InvoicePanel {
 								gridy = gridy + 2;//14
 							}
 							
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getCode())){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getCode())){
 								gridy++;//15
 								ComponentLabelPanel label = new ComponentLabelPanel("Код товара (ТН ВЭД ЕАЭС)", 1,gridy)
 										.setContainsGridwidth(2)
@@ -1907,7 +1907,7 @@ public class InvoicePanel {
 								rosterPanel.add(textField.getTextField(), textField.getContains());	
 							}
 							
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getCodeOced())){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getCodeOced())){
 								gridy++;//16
 								ComponentLabelPanel label = new ComponentLabelPanel("Код видов деятельности (ОКЭД)", 1,gridy)
 										.setContainsGridwidth(2)
@@ -1928,7 +1928,7 @@ public class InvoicePanel {
 								rosterPanel.add(textField.getTextField(), textField.getContains());	
 							}
 							
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getUnits())){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getUnits())){
 								gridy++;//17
 								ComponentLabelPanel label = new ComponentLabelPanel("Единица измерения", 1,gridy)
 										.setContainsGridwidth(2)
@@ -1949,7 +1949,7 @@ public class InvoicePanel {
 								rosterPanel.add(textField.getTextField(), textField.getContains());	
 							}
 							
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getCount())){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getCount())){
 								gridy++;//18
 								ComponentLabelPanel label = new ComponentLabelPanel("Количество (объём)", 1,gridy)
 										.setContainsGridwidth(2)
@@ -1970,7 +1970,7 @@ public class InvoicePanel {
 								rosterPanel.add(textField.getTextField(), textField.getContains());	
 							}
 							
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getPrice())){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getPrice())){
 								gridy++;//19
 								ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Цена (тариф) за единицу товара (работы, услуги)",
 																														"имущественных прав без учёта НДС"}), 1,gridy)
@@ -1994,7 +1994,7 @@ public class InvoicePanel {
 								gridy = gridy + 2;//21
 							}
 							
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getCost())){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getCost())){
 								gridy++;//22
 								ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Стоимость товаров (работ, услуг)",
 																														"имущественных прав без учёта НДС"}), 1,gridy)
@@ -2018,7 +2018,7 @@ public class InvoicePanel {
 								gridy = gridy + 2;//24
 							}
 							
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getSummaExcise())){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getSummaExcise())){
 								gridy++;//25
 								ComponentLabelPanel label = new ComponentLabelPanel("В том числе сумма акциза, руб", 1,gridy)
 										.setContainsGridwidth(2)
@@ -2039,8 +2039,8 @@ public class InvoicePanel {
 								rosterPanel.add(textField.getTextField(), textField.getContains());	
 							}
 							
-							if(Verification.verifySection(invoice.getRoster().getRosters().get(index).getVat())){
-								if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getVat().getRate())){
+							if(Validation.verifySection(invoice.getRoster().getRosters().get(index).getVat())){
+								if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getVat().getRate())){
 									gridy++;//26
 									ComponentLabelPanel label = new ComponentLabelPanel("Ставка НДС", 2,gridy)
 											.setLabelFont(FONT)
@@ -2060,7 +2060,7 @@ public class InvoicePanel {
 									rosterPanel.add(textField.getTextField(), textField.getContains());	
 								}
 								
-								if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getVat().getRateType())){
+								if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getVat().getRateType())){
 									gridy++;//27
 									ComponentLabelPanel label = new ComponentLabelPanel("Ставка НДС (тип)", 2,gridy)
 											.setLabelFont(FONT)
@@ -2097,7 +2097,7 @@ public class InvoicePanel {
 									rosterPanel.add(textField.getTextField(), textField.getContains());	
 								}
 								
-								if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getVat().getSummaVat())){
+								if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getVat().getSummaVat())){
 									gridy++;//28
 									ComponentLabelPanel label = new ComponentLabelPanel("Сумма НДС", 2,gridy)
 											.setLabelFont(FONT)
@@ -2118,7 +2118,7 @@ public class InvoicePanel {
 								}
 							}
 							
-							if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getCostVat())){
+							if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getCostVat())){
 								gridy++;//29
 								ComponentLabelPanel label = new ComponentLabelPanel(HtmlLines.getHtmlText(new String[]{"Стоимость товаров (работ, услуг)",
 																														"имущественных прав с учётом НДС"}), 1,gridy)
@@ -2142,7 +2142,7 @@ public class InvoicePanel {
 								gridy = gridy + 2;//31
 							}
 							
-							if(Verification.verifyList(invoice.getRoster().getRosters().get(index).getDescriptions())){
+							if(Validation.verifyList(invoice.getRoster().getRosters().get(index).getDescriptions())){
 								if(invoice.getRoster().getRosters().get(index).getDescriptions().size() > 0){
 										gridy++;//32
 										ComponentLabelPanel label = new ComponentLabelPanel("Дополнительные данные", 1,gridy)
@@ -2159,8 +2159,8 @@ public class InvoicePanel {
 											
 								}
 								for(int jndex = 0;jndex < invoice.getRoster().getRosters().get(index).getDescriptions().size();jndex++){
-									if(Verification.verifySection(invoice.getRoster().getRosters().get(index).getDescriptions().get(jndex))){
-										if(Verification.verifyField(invoice.getRoster().getRosters().get(index).getDescriptions().get(jndex).getDescription())){
+									if(Validation.verifySection(invoice.getRoster().getRosters().get(index).getDescriptions().get(jndex))){
+										if(Validation.verifyField(invoice.getRoster().getRosters().get(index).getDescriptions().get(jndex).getDescription())){
 											if(index > 1){
 												ComponentLabelPanel label = new ComponentLabelPanel("", 1,gridy)
 														.setContainsGridwidth(2)

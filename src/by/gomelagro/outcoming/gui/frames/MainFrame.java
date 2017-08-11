@@ -44,7 +44,7 @@ import by.gomelagro.outcoming.gui.frames.count.ILoadCount;
 import by.gomelagro.outcoming.gui.frames.count.InsertLoadCount;
 import by.gomelagro.outcoming.gui.frames.count.UpdateCount;
 import by.gomelagro.outcoming.gui.frames.enstatus.UpdateEnStatus;
-import by.gomelagro.outcoming.gui.frames.invoice.data.list.StringList;
+import by.gomelagro.outcoming.gui.frames.invoice.data.list.basic.StringList;
 import by.gomelagro.outcoming.gui.frames.list.JMonthPanel;
 import by.gomelagro.outcoming.gui.frames.list.MonthPanelListModel;
 import by.gomelagro.outcoming.gui.frames.list.MonthYearItem;
@@ -418,9 +418,11 @@ public class MainFrame extends JFrame{
 		loadFolderMenuItem.addMouseListener(new MouseAdapter(){
 			@Override
 			public void mousePressed(MouseEvent evt){
-				if(loadFolderMenuItem.isEnabled()){
-					new LoadOfFolderFrame().setVisible(true);
-				}
+				//if(EVatServiceSingleton.getInstance().isConnected()){
+					if(loadFolderMenuItem.isEnabled()){
+						new LoadOfFolderFrame().setVisible(true);
+					}
+				//}
 			}
 		});
 		//loadFolderMenuItem.setEnabled(false);
@@ -626,7 +628,7 @@ public class MainFrame extends JFrame{
 				System.out.println("Подключение к сервису "+ApplicationProperties.getInstance().getUrlService()+" выполнено успешно");
 				connectMenuItem.setEnabled(false);
 				disconnectMenuItem.setEnabled(true);
-				
+				loadFolderMenuItem.setEnabled(true);
 				updateStatusMenuItem.setEnabled(true);
 				fastUpdateStatusMenuItem.setEnabled(true);
 			}else{
@@ -643,7 +645,7 @@ public class MainFrame extends JFrame{
 					System.out.println("Отключение от сервиса "+ApplicationProperties.getInstance().getUrlService()+" выполнено успешно");
 					connectMenuItem.setEnabled(true);
 					disconnectMenuItem.setEnabled(false);
-					
+					loadFolderMenuItem.setEnabled(false);
 					updateStatusMenuItem.setEnabled(false);
 					fastUpdateStatusMenuItem.setEnabled(false);
 				}else{

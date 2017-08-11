@@ -8,7 +8,6 @@ import java.util.List;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.ListSelectionModel;
-
 import by.gomelagro.outcoming.gui.frames.ShowInvoiceFrame;
 import by.gomelagro.outcoming.gui.frames.folder.component.list.FileCheckBoxList;
 import by.gomelagro.outcoming.gui.frames.folder.models.FileCheckBoxListModel;
@@ -28,7 +27,9 @@ public class JFileCheckBoxList extends JList<JFileCheckBox> {
 		super();
 		setModel(new FileCheckBoxListModel());
 		setCellRenderer(new FileListCellRenderer());
+		setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		addMouseListener(new MouseAdapter() {
+						
 			@Override		
 			public void mouseClicked(MouseEvent me){
 				switch(me.getButton()){
@@ -65,7 +66,8 @@ public class JFileCheckBoxList extends JList<JFileCheckBox> {
 				}
 			}
 		});
-		setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		//setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		
 	}
 	
 	//количество выделенных элементов
@@ -131,11 +133,15 @@ public class JFileCheckBoxList extends JList<JFileCheckBox> {
 	//список выделенных элементовы
 	public FileCheckBoxList getCheckedItems() {
 		FileCheckBoxList list = new FileCheckBoxList();
-		for(int index=0;index<getModel().getSize();index++){
-			if(getModel().getElementAt(index).isChecked()){
-				list.add(getModel().getElementAt(index));
+		if(getModel().getSize() > 0){
+			for(int index=0;index<getModel().getSize();index++){
+				if(getModel().getElementAt(index).isChecked()){
+					list.add(getModel().getElementAt(index));
+				}
 			}
+			return list;
+		}else{
+			return null;
 		}
-		return list;
 	}
 }

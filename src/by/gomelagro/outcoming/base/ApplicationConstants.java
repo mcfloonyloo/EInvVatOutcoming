@@ -1,7 +1,7 @@
 package by.gomelagro.outcoming.base;
 
 public class ApplicationConstants {
-	public static final String APP_VERSION = "v0.3.8.0";
+	public static final String APP_VERSION = "v0.3.8.1";
 	
 	public static final String APP_MAINFRAME_TITLE = "Приложение для обработки исходящих ЭСЧФ";
 	public static final String APP_REPORTONEDAYFRAME_TITLE = "Отчет по ЭСЧФ за один день";
