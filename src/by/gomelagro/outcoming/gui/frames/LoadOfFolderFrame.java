@@ -33,10 +33,6 @@ import by.avest.edoc.client.AvETicket;
 import by.avest.edoc.client.AvError;
 import by.gomelagro.outcoming.gui.db.WorkingOutcomingTable;
 import by.gomelagro.outcoming.gui.db.number.NumberInvoice;
-import by.gomelagro.outcoming.gui.frames.count.ILoadCount;
-import by.gomelagro.outcoming.gui.frames.count.ISendCount;
-import by.gomelagro.outcoming.gui.frames.count.InsertSendCount;
-import by.gomelagro.outcoming.gui.frames.count.UpdateCount;
 import by.gomelagro.outcoming.gui.frames.folder.component.JFileCheckBoxList;
 import by.gomelagro.outcoming.gui.frames.folder.component.list.FileCheckBoxList;
 import by.gomelagro.outcoming.gui.frames.folder.list.WorkingFileList;
@@ -62,6 +58,8 @@ public class LoadOfFolderFrame extends JFrame {
 	
 	private JTextField folderPathTextField;
 	private JPopupMenu buttonPopup;
+	
+	private boolean sendResult;
 
 	/**
 	 * Create the frame.
@@ -127,14 +125,18 @@ public class LoadOfFolderFrame extends JFrame {
 			public void mousePressed(MouseEvent me) {
 				if(EVatServiceSingleton.getInstance().isConnected()){
 					int select = filesList.getSelectedIndex();
-					sendListInvoices();
-					model.clear();
-					model.addElements(WorkingFileList.fillListOfAllFiles(folderPathTextField.getText().trim()));
-					filesList.setSelectedIndex(select);
+					if(sendListInvoices()){
+					//if(true){
+						System.out.println(filesList.getCheckedItems().size());
+						model.clear();
+						model.addElements(WorkingFileList.fillListOfAllFiles(folderPathTextField.getText().trim()));
+						filesList.setSelectedIndex(select);
+					}
 				}
 				else{
 					JOptionPane.showMessageDialog(null, "Сервис не подключен","Внимание",JOptionPane.WARNING_MESSAGE);
 				}
+				//sendListInvoices();
 			}
 		});
 		sendMenu.add(sendMenuItem);
@@ -310,25 +312,30 @@ public class LoadOfFolderFrame extends JFrame {
 	}
 	*/
 	
-	private void sendListInvoices(){
+	private boolean sendListInvoices(){
+
 		SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>(){
 
 			@Override
 			protected Void doInBackground() throws Exception {
+				sendResult = true;
+				
 				List<NumberInvoice> listInvoice = new ArrayList<NumberInvoice>();
 				listInvoice.clear();
-				
+
 				FileCheckBoxList list = filesList.getCheckedItems();
 				if(list != null){
 					LoadFileProgressBar progress = new LoadFileProgressBar(list.size()).activated();
-					ISendCount insert = new InsertSendCount();					
-					ILoadCount update = new UpdateCount();
+					int validCount = 0;
+					int invalidCount = 0;
+					int acceptCount = 0;
+					int errorCount = 0;
 								
 					for(int index=0;index<list.size();index++){
 						File file = new File(folderPathTextField.getText().trim()+"\\"+list.get(index).getValue().trim());
 						if(!(file.exists() && file.isFile())){
 							System.err.println("Файл "+folderPathTextField.getText().trim()+"\\"+list.get(index).getValue().trim()+" отсутствует");
-							insert.addInValidCount();
+							invalidCount++;
 							continue;
 						}else{
 							Invoice invoice = LoadInvoice.loadFile(folderPathTextField.getText().trim()+"\\"+list.get(index).getValue().trim());
@@ -336,11 +343,11 @@ public class LoadOfFolderFrame extends JFrame {
 								AvEDoc doc = EVatServiceSingleton.getInstance().getService().createEDoc();
 								doc.getDocument().load(invoice.getContent());
 								switch(WorkingOutcomingTable.Count.getCountRecord(invoice.getGeneral().getNumber())){
-									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+invoice.getGeneral().getNumber()+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); insert.addErrorCount(); break;
+									case -1: JOptionPane.showMessageDialog(null, "Ошибка проверки наличия записи ЭСЧФ "+invoice.getGeneral().getNumber()+" в таблице","Ошибка",JOptionPane.ERROR_MESSAGE); errorCount++; break;
 									case 0:{
 										if(doc.getDocument().validateXML(invoice.getXsdSchema())){
 											doc.sign();
-											insert.addValidCount();
+											validCount++;
 											AvETicket ticket = EVatServiceSingleton.getInstance().getService().sendEDoc(doc);
 											if(ticket.accepted()){
 												int id = WorkingOutcomingTable.Insert.insertOutcomingFile(invoice);
@@ -348,21 +355,21 @@ public class LoadOfFolderFrame extends JFrame {
 													if(WorkingOutcomingTable.Insert.insertOutcomingDocumentsFile(id, invoice)){
 														listInvoice.add(new NumberInvoice().addId(String.valueOf(id)).addNumber(invoice.getGeneral().getNumber()));
 														System.out.println("ЭСЧФ "+invoice.getGeneral().getNumber()+" принята к обработке: "+ticket.getMessage());
-														insert.addAcceptCount();
+														acceptCount++;
 													}else{
-														insert.addErrorCount();
+														errorCount++;
 													}									
 												}else{
-													insert.addErrorCount();
+													errorCount++;
 												}
 											}else{
 												AvError err = ticket.getLastError();
 												System.err.println("Ошибка: ЭСЧФ "+invoice.getGeneral().getNumber()+" не принята к обработке: "+err.getMessage());
-												insert.addErrorCount();
+												errorCount++;
 											}
 										}else{
 											System.out.println("ЭСЧФ "+invoice.getGeneral().getNumber()+" не корректна");
-											insert.addInValidCount();
+											invalidCount++;
 										};
 										break;
 									}
@@ -372,7 +379,7 @@ public class LoadOfFolderFrame extends JFrame {
 								}
 							}else{
 								System.err.println("Файл "+list.get(index).getValue()+": ошибка загрузки");
-								insert.addInValidCount();
+								invalidCount++;
 							}
 						}
 						progress.setProgress(index);
@@ -382,30 +389,33 @@ public class LoadOfFolderFrame extends JFrame {
 							continue;
 						}
 					}
-					JOptionPane.showMessageDialog(null, "Корректных ЭСЧФ - "+insert.getValidCount()+","+System.lineSeparator()+
-														"из них: отправлено - "+insert.getAcceptCount()+","+System.lineSeparator()+	
-														"        имеют ошибки при отправлении - "+insert.getErrorCount()+";"+System.lineSeparator()+
-														"Некорректных ЭСЧФ - "+insert.getInValidCount() ,"Информация",JOptionPane.INFORMATION_MESSAGE);
+					JOptionPane.showMessageDialog(null, "Корректных ЭСЧФ - "+validCount+","+System.lineSeparator()+
+														"из них: отправлено - "+acceptCount+","+System.lineSeparator()+	
+														"        имеют ошибки при отправлении - "+errorCount+";"+System.lineSeparator()+
+														"Некорректных ЭСЧФ - "+invalidCount ,"Информация",JOptionPane.INFORMATION_MESSAGE);
 					progress.disactivated();
 					
 					if(listInvoice != null){
 						LoadFileProgressBar progressUpdate = new LoadFileProgressBar(listInvoice.size()).activated();					
-															
+						acceptCount = 0;
+						errorCount = 0;
+						int missCount = 0;
+									
 						for(int index=0;index<listInvoice.size();index++){
 							AvEStatus status = EVatServiceSingleton.getInstance().getService().getStatus(listInvoice.get(index).getNumber());
 							boolean isValid = status.verify();
 							if(isValid){
 								if(!WorkingOutcomingTable.Field.getOutcomingStatus(listInvoice.get(index).getId()).equals(status.getStatus())){
 									if(WorkingOutcomingTable.Insert.insertOutcomingStatusesFile(listInvoice.get(index).getId(), status.getStatus(), Status.valueEnOf(status.getStatus()))){
-										update.addBaseCount();
+										acceptCount++;
 									}else{
-										update.addErrorCount();
+										errorCount++;
 									}
 								}else{
-									update.addMissCount();
+									missCount++;
 								}
 							}else{
-								update.addErrorCount();
+								errorCount++;
 							}
 							progressUpdate.setProgress(index);
 							if(progressUpdate.isCancelled()){
@@ -414,20 +424,22 @@ public class LoadOfFolderFrame extends JFrame {
 								continue;
 							}
 						}
-						JOptionPane.showMessageDialog(null, "Обновлено статусов ЭСЧФ - "+update.getBaseCount()+","+System.lineSeparator()+	
-															"имеют ошибки при обновлении - "+update.getErrorCount()+","+System.lineSeparator()+
-															"пропущено ЭСЧФ - " + update.getMissCount(),"Информация",JOptionPane.INFORMATION_MESSAGE);
+						JOptionPane.showMessageDialog(null, "Обновлено статусов ЭСЧФ - "+acceptCount+","+System.lineSeparator()+	
+															"имеют ошибки при обновлении - "+errorCount+","+System.lineSeparator()+
+															"пропущено ЭСЧФ - " + missCount,"Информация",JOptionPane.INFORMATION_MESSAGE);
 						progressUpdate.disactivated();
 					}
 					
 				}else{
 					JOptionPane.showMessageDialog(null, "Не выделено ни одной ЭСЧФ","Внимание",JOptionPane.WARNING_MESSAGE);
+					sendResult = false;
 				}
 				return null;
 			}
 			
 		};
 		worker.execute();
+		return sendResult;
 	}
 	
 	/* Проверка полей

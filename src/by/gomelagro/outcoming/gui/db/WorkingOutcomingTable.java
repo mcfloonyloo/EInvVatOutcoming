@@ -14,6 +14,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import javax.swing.JOptionPane;
+
 import by.gomelagro.outcoming.base.ApplicationConstants;
 import by.gomelagro.outcoming.format.date.InvoiceDateFormat;
 import by.gomelagro.outcoming.gui.db.files.data.UnloadedInvoice;
@@ -21,9 +22,9 @@ import by.gomelagro.outcoming.gui.db.number.NumberInvoice;
 import by.gomelagro.outcoming.gui.frames.count.ILoadCount;
 import by.gomelagro.outcoming.gui.frames.count.ISendCount;
 import by.gomelagro.outcoming.gui.frames.invoice.Invoice;
-import by.gomelagro.outcoming.gui.frames.invoice.data.list.BooleanList;
-import by.gomelagro.outcoming.gui.frames.invoice.data.list.StringList;
-import by.gomelagro.outcoming.gui.frames.invoice.verification.Verification;
+import by.gomelagro.outcoming.gui.frames.invoice.data.list.basic.BooleanList;
+import by.gomelagro.outcoming.gui.frames.invoice.data.list.basic.StringList;
+import by.gomelagro.outcoming.gui.frames.invoice.verification.Validation;
 import by.gomelagro.outcoming.gui.frames.list.MonthYearItem;
 import by.gomelagro.outcoming.gui.frames.report.component.ResultFont;
 import by.gomelagro.outcoming.status.Status;
@@ -603,7 +604,7 @@ public class WorkingOutcomingTable {
 				statement.setString(3,  invoice.getRecipient().getName().trim());
 				statement.setString(4,  invoice.getGeneral().getNumber().trim());
 				statement.setString(5,  invoice.getGeneral().getDocumentType().trim());
-				if(Verification.verifyField(invoice.getGeneral().getDateIssuance().trim())){
+				if(Validation.verifyField(invoice.getGeneral().getDateIssuance().trim())){
 					if(invoice.getGeneral().getDateIssuance().trim().length() > 0){
 						//statement.setString(6, InvoiceDateFormat.dateReverseSmallDash2String(InvoiceDateFormat.string2DateSmallDash(invoice.getGeneral().getDateIssuance().trim())));
 						statement.setString(6, invoice.getGeneral().getDateIssuance().trim());
@@ -621,7 +622,7 @@ public class WorkingOutcomingTable {
 					statement.setString(7, "");
 				}
 				
-				if(Verification.verifyField(invoice.getGeneral().getInvoice())){
+				if(Validation.verifyField(invoice.getGeneral().getInvoice())){
 					statement.setString(8, invoice.getGeneral().getInvoice().trim());
 				}else{
 					statement.setString(8, "");
@@ -683,14 +684,14 @@ public class WorkingOutcomingTable {
 					+ "NUMBERDOCUMENT)"		// 06
 					+ " VALUES (?,?,?,?,?,?)";
 			BooleanList list = new BooleanList();
-			if(Verification.verifyList(invoice.getDeliveryCondition().getContract().getDocuments())){
+			if(Validation.verifyList(invoice.getDeliveryCondition().getContract().getDocuments())){
 				for(int index = 0; index < invoice.getDeliveryCondition().getContract().getDocuments().size(); index++){
 					try{
 						PreparedStatement statement = ConnectionDB.getInstance().getConnection().prepareStatement(sql);
 						statement.setInt(1,  outcomingId);
 						
-						if(Verification.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType())){
-							if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode().trim())){
+						if(Validation.verifySection(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType())){
+							if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode().trim())){
 								statement.setString(2, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDocType().getCode().trim());
 							}else{
 								statement.setString(2, "");
@@ -699,7 +700,7 @@ public class WorkingOutcomingTable {
 							statement.setString(2, "");
 						}
 						
-						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate().trim())){
+						if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate().trim())){
 							if(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate().trim().length() > 0){
 								statement.setString(3, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getDate());
 							}else{
@@ -709,19 +710,19 @@ public class WorkingOutcomingTable {
 							statement.setString(3, "");
 						}
 						
-						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode().trim())){
+						if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode().trim())){
 							statement.setString(4, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getBlankCode().trim());
 						}else{
 							statement.setString(4, "");
 						}
 						
-						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria().trim())){
+						if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria().trim())){
 							statement.setString(5, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getSeria().trim());
 						}else{
 							statement.setString(5, "");
 						}
 						
-						if(Verification.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber().trim())){
+						if(Validation.verifyField(invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber().trim())){
 							statement.setString(6, invoice.getDeliveryCondition().getContract().getDocuments().get(index).getNumber().trim());
 						}else{
 							statement.setString(6, "");

@@ -3,7 +3,7 @@ package by.gomelagro.outcoming.gui.frames.invoice.verification;
 import by.gomelagro.outcoming.gui.frames.invoice.data.InvoiceSectionIntf;
 import by.gomelagro.outcoming.gui.frames.invoice.data.list.InvoiceSubSectionListIntf;
 
-public class Verification {
+public class Validation {
 	/*
 	 * ѕроверка пол€ на его наличие или на наличие значени€
 	 */

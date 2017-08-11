@@ -1,8 +1,6 @@
 package by.gomelagro.outcoming.gui.frames.invoice;
 
-import java.io.DataInputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.text.ParseException;
 
@@ -28,6 +26,8 @@ import by.gomelagro.outcoming.gui.frames.invoice.parse.ParseRoster;
 import by.gomelagro.outcoming.gui.frames.invoice.parse.ParseSenderReceiver;
 import by.gomelagro.outcoming.properties.ApplicationProperties;
 import by.gomelagro.outcoming.service.EVatServiceSingleton;
+import by.gomelagro.outcoming.xml.LoadXML;
+import by.gomelagro.outcoming.xml.LoadXSD;
 
 public class LoadInvoice {
 	public static Invoice loadPortal(String number){
@@ -54,7 +54,7 @@ public class LoadInvoice {
 					}
 			}
 			
-			invoice.setXsdSchema(loadXsdSchema(ApplicationProperties.getInstance().getFolderXsdPath().trim(), invoice.getGeneral().getDocumentType()));
+			invoice.setXsdSchema(LoadXSD.loadXsdSchema(ApplicationProperties.getInstance().getFolderXsdPath().trim(), invoice.getGeneral().getDocumentType()));
 			
 		} catch (IOException | AvDocException | ParseException | ToolException e) {
 			JOptionPane.showMessageDialog(null, "Ошибка обработки ЭСЧФ"+System.lineSeparator()+e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
@@ -69,7 +69,7 @@ public class LoadInvoice {
 			invoice = new Invoice();
 			
 			File file  = new File(filename);
-			invoice.setConvertContent(readFile(file));		
+			invoice.setConvertContent(LoadXML.readFile(file));		
 			
 			DocumentBuilder documentBuilder = DocumentBuilderFactory.newInstance().newDocumentBuilder();
 			//способ открытия XML с нужной кодировкой
@@ -94,7 +94,7 @@ public class LoadInvoice {
 					}
 			}
 			
-			invoice.setXsdSchema(loadXsdSchema(ApplicationProperties.getInstance().getFolderXsdPath().trim(), invoice.getGeneral().getDocumentType()));
+			invoice.setXsdSchema(LoadXSD.loadXsdSchema(ApplicationProperties.getInstance().getFolderXsdPath().trim(), invoice.getGeneral().getDocumentType()));
 			
 		} catch (ParserConfigurationException | SAXException | IOException | ToolException e) {
 			//JOptionPane.showMessageDialog(null, "Ошибка обработки ЭСЧФ"+System.lineSeparator()+e.getLocalizedMessage(),"Ошибка",JOptionPane.ERROR_MESSAGE);
@@ -103,40 +103,4 @@ public class LoadInvoice {
 		}
 		return invoice;
 	}	
-	
-	private static byte[] readFile(File file) throws ToolException {
-		byte[] fileData = new byte[(int) file.length()];
-		try (DataInputStream dis = new DataInputStream(new FileInputStream(file))){
-			
-			dis.readFully(fileData);
-		} catch (IOException e) {
-				
-		}
-		return fileData;
-	}
-	
-	private static byte[] loadXsdSchema(String xsdFolderName, String doctype) throws ToolException {
-		File xsdFile = null;
-		doctype = (doctype == null) ? "" : doctype;
-
-		if ((doctype.equalsIgnoreCase("ORIGINAL")) || (doctype.equalsIgnoreCase("ADD_NO_REFERENCE")))
-			xsdFile = new File(xsdFolderName, "MNSATI_original.xsd");
-		else if (doctype.equalsIgnoreCase("FIXED"))
-			xsdFile = new File(xsdFolderName, "MNSATI_fixed.xsd");
-		else if (doctype.equalsIgnoreCase("ADDITIONAL"))
-			xsdFile = new File(xsdFolderName, "MNSATI_additional.xsd");
-		else {
-			throw new ToolException(new StringBuilder().append("Неизвестный тип счета-фактуры НДС '").append(doctype)
-					.append("'.").toString());
-		}
-
-		if ((!(xsdFile.exists())) && (!(xsdFile.isFile()))) {
-			throw new ToolException(new StringBuilder().append("Невозможно загрузить XSD файл '")
-					.append(xsdFile.getAbsolutePath()).append("'").toString());
-		}
-
-		byte[] result = readFile(xsdFile);
-
-		return result;
-	}
 }

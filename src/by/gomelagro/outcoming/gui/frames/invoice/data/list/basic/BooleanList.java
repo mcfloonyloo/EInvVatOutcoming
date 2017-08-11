@@ -1,4 +1,4 @@
-package by.gomelagro.outcoming.gui.frames.invoice.data.list;
+package by.gomelagro.outcoming.gui.frames.invoice.data.list.basic;
 
 import java.util.AbstractList;
 

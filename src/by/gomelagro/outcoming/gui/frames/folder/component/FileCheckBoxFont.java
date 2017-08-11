@@ -12,6 +12,10 @@ public class FileCheckBoxFont {
 		return new Font("Tahoma", Font.BOLD, 11);
 	}
 	
+	public static Color getPurpleFore(){
+		return new Color(170,0,130);
+	}
+	
 	public static Color getRedFore(){
 		return new Color(150,0,0);
 	}
@@ -31,6 +35,10 @@ public class FileCheckBoxFont {
 	public static Color getBlackFore(){
 		return new Color(0,0,0);
 	}
+	
+	public static Color getPurpleBack(){
+		return new Color(250,190,250);
+	}	
 	
 	public static Color getRedBack(){
 		return new Color(230,180,180);
